@@ -313,14 +313,15 @@
     <!-- 中文提示 -->
     <div class="hint-box">
       <span class="hint-zh" id="hint-zh"></span>
-      <button class="speak-btn" id="btn-speak" title="聽發音">🔊</button>
     </div>
 
     <!-- 字母格子（由 JS 動態渲染）-->
     <div class="letters" id="letters"></div>
 
     <div class="game-actions">
+      <button class="btn btn-sky" id="btn-speak">🔊 聽發音</button>
       <button class="btn btn-pink" id="btn-submit">✅ 送出答案</button>
+      <button class="btn btn-purple" id="btn-restart-word">🔄 重考這個字</button>
     </div>
     <div class="feedback" id="feedback"></div>
   </div>
@@ -361,6 +362,10 @@
     <h3 id="clear-title">太厲害了！</h3>
     <div class="correct-word" id="clear-word"></div>
     <p id="clear-zh"></p>
+    <div class="row" id="clear-extra">
+      <button class="btn btn-sky btn-small" id="btn-clear-speak">🔊 聽發音</button>
+      <button class="btn btn-purple btn-small" id="btn-clear-again">🔄 再考一次</button>
+    </div>
     <div class="row">
       <button class="btn btn-mint" id="btn-next">下一個單字 ➡️</button>
     </div>
@@ -453,14 +458,59 @@ function confetti(count = 80) {
   }
 }
 
-// 用瀏覽器內建語音念出單字（不支援的瀏覽器就略過）
+/* -------------------------------------------------------------
+   念出單字：優先使用 Google 翻譯的發音
+   1. 先用 <audio> 播放 Google 翻譯的語音網址（需要連網）
+   2. 若播放失敗（離線、被擋），改用瀏覽器內建語音，
+      並盡量挑選名稱含 "Google" 的美式英文語音（Chrome 內建，音色接近 Google 翻譯）
+   ------------------------------------------------------------- */
+let currentAudio = null;
+
+function googleTtsUrl(text) {
+  return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en'
+       + '&q=' + encodeURIComponent(text);
+}
+
 function speak(text) {
+  // 停掉上一次還在念的聲音，避免重疊
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+
+  const audio = new Audio(googleTtsUrl(text));
+  currentAudio = audio;
+  let fellBack = false;
+  const fallback = () => {
+    if (fellBack || currentAudio !== audio) return;
+    fellBack = true;
+    speakWithBrowser(text);
+  };
+  audio.addEventListener('error', fallback);
+  const p = audio.play();
+  if (p && p.catch) p.catch(fallback);
+}
+
+// 備援：瀏覽器內建語音
+function pickEnglishVoice() {
+  const voices = window.speechSynthesis.getVoices();
+  return voices.find(v => /google/i.test(v.name) && v.lang === 'en-US')
+      || voices.find(v => /google/i.test(v.name) && /^en/i.test(v.lang))
+      || voices.find(v => v.lang === 'en-US')
+      || voices.find(v => /^en/i.test(v.lang))
+      || null;
+}
+function speakWithBrowser(text) {
   if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'en-US';
-  u.rate = 0.8;
+  u.rate = 0.85;
+  const v = pickEnglishVoice();
+  if (v) u.voice = v;
   window.speechSynthesis.speak(u);
+}
+// 有些瀏覽器的語音清單是非同步載入的，先觸發一次
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
 /* =============================================================
@@ -521,7 +571,19 @@ function renderWordList() {
       renderWordList();
     });
 
-    li.append(info, del);
+    // 發音按鈕：讓家長確認瀏覽器念得對不對
+    const say = document.createElement('button');
+    say.className = 'btn btn-sky btn-small';
+    say.textContent = '🔊';
+    say.title = '聽發音';
+    say.addEventListener('click', () => speak(w.en));
+
+    const actions = document.createElement('div');
+    actions.style.display = 'flex';
+    actions.style.gap = '8px';
+    actions.append(say, del);
+
+    li.append(info, actions);
     ul.appendChild(li);
   });
 }
@@ -647,6 +709,7 @@ function alertNoWords() {
   $('clear-title').textContent = '還沒有單字喔！';
   $('clear-word').textContent = '';
   $('clear-zh').textContent = '請爸爸媽媽到「家長設定」新增單字';
+  $('clear-extra').style.display = 'none';   // 沒有單字時不顯示發音/再考按鈕
   $('btn-next').textContent = '好的';
   $('btn-next').onclick = () => { closeModal('modal-clear'); showScreen('home'); };
   openModal('modal-clear');
@@ -833,6 +896,7 @@ function showClearModal() {
   $('clear-title').textContent = '這個單字你學會了！';
   $('clear-word').textContent = game.current.en;
   $('clear-zh').textContent = game.current.zh;
+  $('clear-extra').style.display = '';
   $('btn-next').textContent = '下一個單字 ➡️';
   $('btn-next').onclick = () => { closeModal('modal-clear'); nextWord(); };
   openModal('modal-clear');
@@ -856,7 +920,21 @@ $('btn-retry').addEventListener('click', () => {
 });
 
 $('btn-submit').addEventListener('click', submitAnswer);
+// 🔊 聽發音：念出目前這個單字
 $('btn-speak').addEventListener('click', () => game.current && speak(game.current.en));
+
+// 🔄 重考這個字：同一個單字從第 1 關重新開始（不扣分、不換字）
+$('btn-restart-word').addEventListener('click', () => {
+  if (!game.current) return;
+  startStage(1);
+});
+
+// 過關視窗裡的「聽發音」與「再考一次」
+$('btn-clear-speak').addEventListener('click', () => game.current && speak(game.current.en));
+$('btn-clear-again').addEventListener('click', () => {
+  closeModal('modal-clear');
+  startStage(1);
+});
 $('btn-game-back').addEventListener('click', () => showScreen('home'));
 
 // 開啟網頁時先跑一次 loadWords()，確保預設單字已寫入 localStorage
