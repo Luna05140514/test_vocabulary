@@ -2,428 +2,521 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>單字大冒險 - 漸進式挖空拼字遊戲</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>練習背英文單字</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
 <style>
-  /* =========================================================
-     全域樣式 & 色票
-     ========================================================= */
-  :root {
-    --pink: #ff8fb8;
-    --pink-dark: #f0609a;
-    --purple: #b98cff;
-    --purple-dark: #9563f0;
-    --yellow: #ffd95e;
-    --mint: #6fe0c2;
-    --mint-dark: #3cc7a2;
-    --sky: #7cc8ff;
-    --red: #ff6b6b;
-    --text: #4a3b5c;
-    --card: #ffffff;
-    --radius: 24px;
+/* =============================================================
+   正式、簡潔的版面：中性灰底、深藍主色、細邊框、小圓角
+   ============================================================= */
+:root{
+  --bg:#F3F4F6; --surface:#FFFFFF; --surface2:#F8F9FB; --ink:#1A2233; --muted:#5F6878; --line:#DCE0E6; --line2:#C9CFD8;
+  --primary:#1F3A5F; --primary-ink:#FFFFFF; --primary-soft:#E8EDF4;
+  --ok:#2F7A55; --ok-soft:#E7F2EC; --err:#B3362B; --err-soft:#FAECEA; --hl:#F4F1E8;
+  --radius:10px; --radius-sm:8px;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.04);
+  --f-en:"Inter","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-zh:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0F141C; --surface:#171E29; --surface2:#1C2431; --ink:#E6EAF0; --muted:#98A2B3; --line:#2A3443; --line2:#384457;
+    --primary:#8FB0DA; --primary-ink:#0F141C; --primary-soft:#1E2B3D;
+    --ok:#6CC59A; --ok-soft:#173226; --err:#F08A80; --err-soft:#3A1F1C; --hl:#25231C;
+    --shadow:none;
   }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    font-family: "Comic Sans MS", "Chalkboard SE", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
-    color: var(--text);
-    min-height: 100vh;
-    background: linear-gradient(160deg, #ffe3f1 0%, #e9dcff 50%, #d7f3ff 100%);
-    overflow-x: hidden;
-  }
-  /* 背景漂浮的小裝飾 */
-  .bg-deco {
-    position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
-  }
-  .bg-deco span {
-    position: absolute; font-size: 2rem; opacity: .35;
-    animation: floaty 8s ease-in-out infinite;
-  }
-  @keyframes floaty {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50%      { transform: translateY(-25px) rotate(10deg); }
-  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F141C; --surface:#171E29; --surface2:#1C2431; --ink:#E6EAF0; --muted:#98A2B3; --line:#2A3443; --line2:#384457;
+  --primary:#8FB0DA; --primary-ink:#0F141C; --primary-soft:#1E2B3D;
+  --ok:#6CC59A; --ok-soft:#173226; --err:#F08A80; --err-soft:#3A1F1C; --hl:#25231C;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-zh);font-size:16px;line-height:1.55;min-height:100vh;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;line-height:1.25;font-weight:700;letter-spacing:.01em}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.muted{color:var(--muted)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.spacer{flex:1}
 
-  /* 每個「畫面」的共用容器：用 display:none / block 切換 */
-  .screen {
-    display: none;
-    position: relative; z-index: 1;
-    max-width: 820px; margin: 0 auto; padding: 24px 16px 48px;
-    animation: fadeIn .4s ease;
-  }
-  .screen.active { display: block; }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(12px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+/* 畫面容器 */
+.screen{display:none;max-width:820px;margin:0 auto;padding:28px 16px 56px;flex-direction:column;gap:20px}
+.screen.active{display:flex}
 
-  .card {
-    background: var(--card);
-    border-radius: var(--radius);
-    padding: 28px 24px;
-    box-shadow: 0 10px 30px rgba(150, 100, 200, .18);
-  }
+/* 按鈕 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:var(--radius-sm);font-weight:600;font-size:15px;background:var(--surface);border:1px solid var(--line2);color:var(--ink);transition:background .15s,border-color .15s}
+.btn:hover{background:var(--surface2)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--primary);color:var(--primary-ink);border-color:var(--primary)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--err)}
+.btn.ghost{background:transparent;border-color:transparent;padding:0 10px}
+.btn.ghost:hover{background:var(--surface)}
+.btn.small{min-height:36px;font-size:14px;padding:0 12px}
+.btn svg{width:18px;height:18px;flex:none}
+.icon-btn{width:36px;height:36px;border-radius:var(--radius-sm);display:grid;place-items:center;background:var(--surface);border:1px solid var(--line2);color:var(--muted);flex:none}
+.icon-btn:hover{color:var(--ink);background:var(--surface2)}
+.icon-btn svg{width:17px;height:17px}
+.icon-btn.danger:hover{color:var(--err)}
 
-  /* 圓角大按鈕 */
-  .btn {
-    font-family: inherit;
-    font-size: 1.3rem; font-weight: bold;
-    border: none; border-radius: 999px;
-    padding: 14px 32px; cursor: pointer;
-    color: #fff;
-    box-shadow: 0 6px 0 rgba(0,0,0,.12);
-    transition: transform .1s, box-shadow .1s, filter .2s;
-  }
-  .btn:hover  { filter: brightness(1.05); transform: translateY(-2px); }
-  .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.12); }
-  .btn-pink   { background: var(--pink); }
-  .btn-purple { background: var(--purple); }
-  .btn-mint   { background: var(--mint-dark); }
-  .btn-sky    { background: var(--sky); }
-  .btn-gray   { background: #b9b2c4; }
-  .btn-red    { background: var(--red); }
-  .btn-small  { font-size: 1rem; padding: 8px 18px; }
+/* 頂部列 */
+.topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:40px;height:40px;border-radius:var(--radius-sm);background:var(--primary);color:var(--primary-ink);display:grid;place-items:center;flex:none;font-family:var(--f-en);font-weight:700;font-size:16px;letter-spacing:.02em}
+.brand h1{font-size:22px}
+.brand small{display:block;font-family:var(--f-en);font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.14em}
+.page-title{font-size:20px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:3px 10px;border-radius:6px;background:var(--surface2);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.tag.sun{background:var(--primary-soft);border-color:transparent;color:var(--primary)}
+.tag.leaf{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.tag.coral{background:var(--err-soft);border-color:transparent;color:var(--err)}
 
-  /* =========================================================
-     首頁
-     ========================================================= */
-  .home-title {
-    text-align: center; font-size: clamp(2.2rem, 7vw, 3.6rem);
-    margin: 40px 0 8px; color: var(--pink-dark);
-    text-shadow: 3px 3px 0 #fff, 6px 6px 0 rgba(185,140,255,.35);
-    animation: bounce 2.2s ease-in-out infinite;
-  }
-  @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-10px); }
-  }
-  .home-sub { text-align: center; font-size: 1.25rem; margin-bottom: 36px; }
-  .home-buttons {
-    display: flex; flex-direction: column; gap: 20px; align-items: center;
-  }
-  .home-buttons .btn { width: min(320px, 100%); font-size: 1.6rem; padding: 20px; }
-  .home-mascot { text-align: center; font-size: 4.5rem; margin-top: 30px; }
+/* 卡片 */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:18px}
+.card h2{font-size:20px}
+.card h3{font-size:17px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--muted)}
+.card-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.card-head p{margin:0;font-size:14px;color:var(--muted);flex-basis:100%}
 
-  /* =========================================================
-     家長設定頁
-     ========================================================= */
-  .dash-header {
-    display: flex; justify-content: space-between; align-items: center;
-    gap: 12px; flex-wrap: wrap; margin-bottom: 20px;
-  }
-  .dash-header h2 { margin: 0; color: var(--purple-dark); }
-  .add-form { display: flex; gap: 12px; flex-wrap: wrap; }
-  .add-form input {
-    flex: 1 1 180px; font-size: 1.15rem; font-family: inherit;
-    padding: 12px 18px; border-radius: 999px;
-    border: 3px solid #e4d6ff; outline: none;
-  }
-  .add-form input:focus { border-color: var(--purple); }
-  .form-msg { min-height: 1.4em; margin: 10px 4px 0; font-size: .95rem; }
-  .form-msg.err { color: var(--red); }
-  .form-msg.ok  { color: var(--mint-dark); }
-  .word-list { list-style: none; padding: 0; margin: 20px 0 0; }
-  .word-list li {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 12px 18px; margin-bottom: 10px;
-    background: #faf6ff; border-radius: 16px;
-    animation: fadeIn .3s ease;
-  }
-  .word-list .en { font-size: 1.25rem; font-weight: bold; color: var(--purple-dark); }
-  .word-list .zh { font-size: 1.1rem; margin-left: 12px; }
-  .empty-hint { text-align: center; padding: 20px; color: #9a8fae; }
+/* 首頁 */
+/* 首頁：考卷名稱與按鈕置中於畫面 */
+#screen-home{min-height:100vh;min-height:100dvh}
+.home-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;text-align:center;padding-bottom:12vh}
+.home-main .eyebrow{letter-spacing:.2em}
+.home-main .quiz-title{font-size:clamp(28px,6vw,36px);font-weight:700;margin:6px 0 0}
+.home-main #home-quiz-info{margin-top:8px!important}
+.home-actions{display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px}
+.home-actions .btn{min-height:54px;font-size:17px;width:100%}
 
-  /* =========================================================
-     遊戲頁
-     ========================================================= */
-  .game-top {
-    display: flex; justify-content: space-between; align-items: center;
-    gap: 10px; flex-wrap: wrap; margin-bottom: 18px;
-  }
-  .score-badge {
-    background: #fff; border-radius: 999px; padding: 8px 20px;
-    font-size: 1.2rem; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,.08);
-  }
-  .stage-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-bottom: 14px; }
-  .stage-dot {
-    width: 46px; height: 46px; border-radius: 50%;
-    display: grid; place-items: center;
-    font-size: 1.3rem; font-weight: bold;
-    background: #eee6f7; color: #b4a8c6;
-    transition: all .3s;
-  }
-  .stage-dot.done    { background: var(--mint); color: #fff; }
-  .stage-dot.current { background: var(--pink); color: #fff; transform: scale(1.18); box-shadow: 0 0 0 5px rgba(255,143,184,.3); }
-  .stage-label { text-align: center; font-size: 1.1rem; margin-bottom: 8px; color: var(--purple-dark); }
+/* 統計 */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden}
+.stat{padding:14px 16px;background:var(--surface2)}
+.stat + .stat{border-left:1px solid var(--line)}
+.stat b{display:block;font-family:var(--f-en);font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat span{font-size:13px;color:var(--muted)}
 
-  .hint-box { text-align: center; margin: 10px 0 24px; }
-  .hint-zh {
-    display: inline-block; font-size: clamp(2.2rem, 8vw, 3.4rem); font-weight: bold;
-    color: var(--pink-dark);
-    background: #fff0f6; border-radius: 20px; padding: 6px 28px;
-  }
-  .speak-btn {
-    margin-left: 8px; font-size: 1.6rem; vertical-align: middle;
-    background: none; border: none; cursor: pointer;
-  }
+/* 考試區 */
+.progress{display:flex;align-items:center;gap:12px;font-size:14px;font-weight:600;color:var(--muted)}
+.bar{flex:1;height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--primary);transition:width .3s}
+.count{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--primary-soft);color:var(--primary);font-size:12px;font-weight:700;font-family:var(--f-en)}
+.progress .sep{color:var(--line2)}
+.dots{display:flex;flex-wrap:wrap;gap:6px}
+.dot{min-width:32px;height:32px;border-radius:6px;background:var(--surface);border:1px solid var(--line2);font-family:var(--f-en);font-size:14px;font-weight:600;color:var(--muted);display:grid;place-items:center}
+.dot.done{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.dot.cur{background:var(--primary);color:var(--primary-ink);border-color:var(--primary)}
+.dot svg{width:15px;height:15px}
+.zh-big{display:flex;flex-direction:column;align-items:center;gap:6px;padding:22px 16px;border-radius:var(--radius-sm);background:var(--surface2);border:1px solid var(--line)}
+.zh-big .lbl{font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--muted)}
+.zh-big .txt{font-family:var(--f-zh);font-weight:700;font-size:clamp(28px,6vw,38px);line-height:1.2;text-align:center}
+.stage-hint{font-size:14px;color:var(--muted);text-align:center;margin-top:-6px}
 
-  /* 字母格子 */
-  .letters {
-    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
-    margin-bottom: 28px;
-  }
-  .tile, .letter-input {
-    width: clamp(46px, 11vw, 64px); height: clamp(58px, 13vw, 76px);
-    border-radius: 16px;
-    font-size: clamp(1.8rem, 6vw, 2.4rem); font-weight: bold; font-family: inherit;
-    text-align: center; text-transform: lowercase;
-  }
-  /* 已顯示（未被挖空）的字母 */
-  .tile {
-    display: grid; place-items: center;
-    background: var(--yellow); color: var(--text);
-    box-shadow: 0 5px 0 #e9b93a;
-  }
-  /* 非字母符號（空白、連字號）*/
-  .tile.symbol { background: transparent; box-shadow: none; width: 24px; }
-  /* 被挖空、需要孩子輸入的格子 */
-  .letter-input {
-    border: 4px dashed var(--purple); background: #fff; color: var(--purple-dark);
-    outline: none; caret-color: var(--pink);
-    transition: transform .15s, border-color .2s, background .2s;
-  }
-  .letter-input:focus { border-style: solid; border-color: var(--pink); transform: scale(1.08); background: #fff6fa; }
-  .letter-input.filled { border-style: solid; background: #f3ecff; }
+/* 字母格 */
+.letters{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:4px 0}
+.tile,.letters input.letter-input{width:clamp(40px,9vw,54px);height:clamp(52px,11vw,64px);padding:0;border-radius:var(--radius-sm);font-family:var(--f-en);font-weight:600;font-size:clamp(24px,5vw,32px);text-align:center;text-transform:lowercase}
+.tile{display:grid;place-items:center;background:var(--surface2);border:1px solid var(--line);color:var(--muted)}
+.tile.symbol{background:transparent;border-color:transparent;width:16px}
+.letters input.letter-input{border:none;border-bottom:3px solid var(--line2);border-radius:var(--radius-sm) var(--radius-sm) 2px 2px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--ink);outline:none;caret-color:var(--primary);transition:box-shadow .15s,border-color .15s}
+.letters input.letter-input:focus{border-bottom-color:var(--primary);box-shadow:inset 0 0 0 2px var(--primary)}
+.letters input.letter-input.filled{border-bottom-color:var(--primary)}
+.letters.correct input.letter-input{box-shadow:inset 0 0 0 2px var(--ok);border-bottom-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+.letters.wrong input.letter-input{box-shadow:inset 0 0 0 2px var(--err);border-bottom-color:var(--err);background:var(--err-soft);color:var(--err)}
+.letters.wrong{animation:shake .35s ease}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.feedback{text-align:center;font-weight:600;font-size:15px;min-height:24px}
+.feedback.ok{color:var(--ok)} .feedback.info{color:var(--muted)}
 
-  .game-actions { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+.controls{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:10px;padding-top:18px;border-top:1px solid var(--line)}
+.cbtn{min-height:50px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:15px}
+.cbtn:hover{background:var(--surface2)}
+.cbtn svg{width:18px;height:18px}
+.cbtn.main{background:var(--primary);color:var(--primary-ink);border-color:var(--primary);font-size:16px}
+@media (max-width:520px){.controls{grid-template-columns:1fr 1fr}.cbtn.main{grid-column:span 2;order:-1}}
 
-  /* 答對時格子跳一下、答錯時抖一下 */
-  .letters.correct .letter-input,
-  .letters.correct .tile { animation: pop .5s ease; border-color: var(--mint-dark); background: #dcfff4; }
-  @keyframes pop { 50% { transform: scale(1.2); } }
-  .letters.wrong { animation: shake .45s ease; }
-  @keyframes shake {
-    20%, 60% { transform: translateX(-10px); }
-    40%, 80% { transform: translateX(10px); }
-  }
+/* 清單（表格感） */
+.list{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden}
+.list:empty{display:none}
+.item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface)}
+.item + .item{border-top:1px solid var(--line)}
+.item.active{background:var(--primary-soft)}
+.item.editing{box-shadow:inset 3px 0 0 var(--primary)}
+.item .info{flex:1;min-width:0}
+.item .en{font-family:var(--f-en);font-weight:600;font-size:17px}
+.item .zh{color:var(--muted);margin-left:10px;font-size:15px}
+.item .meta{font-size:13px;color:var(--muted);display:flex;gap:4px 14px;flex-wrap:wrap;margin-top:4px;align-items:center}
+.item .actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.empty{text-align:center;color:var(--muted);padding:22px;font-size:14px}
+#quiz-list .item{flex-wrap:wrap}
+#quiz-list .item .info{flex:1 1 160px}
 
-  .feedback {
-    text-align: center; font-size: 1.6rem; font-weight: bold;
-    min-height: 2.2em; margin-top: 16px; color: var(--mint-dark);
-  }
+/* 表單 */
+input[type=text],input[type=password],select{font:inherit;font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line2);border-radius:var(--radius-sm);padding:10px 12px;width:100%;min-height:44px}
+input[type=text]:focus,input[type=password]:focus,select:focus{border-color:var(--primary);outline:none;box-shadow:0 0 0 3px var(--primary-soft)}
+.add-form{display:grid;grid-template-columns:1fr 1fr auto;gap:10px}
+.add-form.two{grid-template-columns:1fr auto}
+@media (max-width:560px){.add-form,.add-form.two{grid-template-columns:1fr}}
+.form-msg{margin:-8px 0 0;min-height:1.2em;font-weight:600;font-size:13px}
+.form-msg.err{color:var(--err)} .form-msg.ok{color:var(--ok)}
+.field{display:flex;flex-direction:column;gap:6px}
+label.t{font-size:13px;font-weight:600;color:var(--muted)}
 
-  /* =========================================================
-     彈出視窗（密碼框 / 答錯提示 / 過關提示）
-     ========================================================= */
-  .modal-mask {
-    display: none; position: fixed; inset: 0; z-index: 50;
-    background: rgba(74, 59, 92, .45);
-    align-items: center; justify-content: center; padding: 16px;
-  }
-  .modal-mask.show { display: flex; }
-  .modal {
-    background: #fff; border-radius: 28px; padding: 30px 26px;
-    width: min(420px, 100%); text-align: center;
-    animation: zoomIn .3s cubic-bezier(.2,1.6,.5,1);
-  }
-  @keyframes zoomIn { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-  .modal h3 { margin: 6px 0 14px; font-size: 1.6rem; }
-  .modal .big-emoji { font-size: 3.8rem; }
-  .modal input[type=password] {
-    width: 100%; font-size: 1.4rem; text-align: center; letter-spacing: 8px;
-    padding: 12px; border-radius: 999px; border: 3px solid #e4d6ff; outline: none;
-    font-family: inherit; margin-bottom: 8px;
-  }
-  .modal input[type=password]:focus { border-color: var(--purple); }
-  .modal .row { display: flex; gap: 12px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
-  .correct-word {
-    font-size: clamp(2.4rem, 10vw, 3.4rem); font-weight: bold; letter-spacing: 6px;
-    color: var(--pink-dark); background: #fff0f6; border-radius: 18px;
-    padding: 8px 12px; margin: 10px 0 4px; word-break: break-all;
-  }
-  .your-answer { color: #9a8fae; font-size: 1rem; }
+/* 分頁切換 */
+.seg{display:flex;gap:0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.seg button{min-height:42px;padding:0 16px;font-weight:600;font-size:15px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{color:var(--primary);border-bottom-color:var(--primary)}
+.seg.pill{border:1px solid var(--line2);border-radius:var(--radius-sm);overflow:hidden;align-self:flex-start}
+.seg.pill button{border-bottom:0;margin:0;min-height:36px;font-size:14px}
+.seg.pill button + button{border-left:1px solid var(--line2)}
+.seg.pill button[aria-pressed="true"]{background:var(--primary);color:var(--primary-ink)}
 
-  /* 彩帶特效 */
-  .confetti {
-    position: fixed; top: -20px; z-index: 100; pointer-events: none;
-    width: 12px; height: 18px; border-radius: 3px;
-    animation: fall linear forwards;
-  }
-  @keyframes fall {
-    to { transform: translateY(110vh) rotate(720deg); opacity: .7; }
-  }
+/* 彈窗 */
+.modal-mask{display:none;position:fixed;inset:0;z-index:50;background:rgba(15,20,28,.45);align-items:center;justify-content:center;padding:16px;overflow:auto}
+.modal-mask.show{display:flex}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:28px 24px 24px;width:min(440px,100%);text-align:center;box-shadow:0 12px 32px rgba(16,24,40,.18);display:flex;flex-direction:column;gap:12px;align-items:center;margin:auto;animation:modalIn .18s ease}
+@keyframes modalIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.modal h3{font-size:19px}
+.modal .badge{width:48px;height:48px;border-radius:50%;display:grid;place-items:center}
+.modal .badge svg{width:24px;height:24px}
+.badge.coral{background:var(--err-soft);color:var(--err)}
+.badge.sky{background:var(--primary-soft);color:var(--primary)}
+.badge.sun{background:var(--primary-soft);color:var(--primary)}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.big-word{font-family:var(--f-en);font-weight:600;font-size:clamp(30px,8vw,40px);letter-spacing:.04em;padding:4px 0;word-break:break-all}
+.modal .row{justify-content:center;width:100%}
+.modal .row .btn{flex:1}
+.modal .list{width:100%;text-align:left}
+.stars{display:none!important}
+.confetti{display:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 
-<!-- 背景裝飾 -->
-<div class="bg-deco" aria-hidden="true">
-  <span style="left:5%;top:10%">⭐</span>
-  <span style="left:85%;top:15%;animation-delay:1s">🌈</span>
-  <span style="left:12%;top:70%;animation-delay:2s">🦄</span>
-  <span style="left:80%;top:75%;animation-delay:3s">🌸</span>
-  <span style="left:48%;top:88%;animation-delay:1.5s">💖</span>
-</div>
-
 <!-- ======================= 首頁 ======================= -->
 <section id="screen-home" class="screen active">
-  <h1 class="home-title">單字大冒險 ✨</h1>
-  <p class="home-sub">一步一步把單字變成你的好朋友！</p>
-  <div class="card">
-    <div class="home-buttons">
-      <button class="btn btn-pink" id="btn-play">🎮 進入遊戲</button>
-      <button class="btn btn-purple" id="btn-parent">🔒 家長設定</button>
-    </div>
+  <div class="topbar">
+    <div class="brand"><div class="logo" aria-hidden="true">Ab</div><div><h1>練習背英文單字</h1><small>WORD PRACTICE</small></div></div>
+    <span class="spacer"></span>
+    <button class="btn ghost small" id="btn-parent" data-icon="lock">家長設定</button>
   </div>
-  <div class="home-mascot">🐰🎀🐱</div>
-</section>
 
-<!-- ======================= 家長設定頁 ======================= -->
-<section id="screen-parent" class="screen">
-  <div class="card">
-    <div class="dash-header">
-      <h2>📚 單字庫管理</h2>
-      <button class="btn btn-gray btn-small" id="btn-parent-back">🏠 回首頁</button>
+  <!-- 首頁內容：不加外框，直接放在頁面上 -->
+  <section class="home-main">
+    <div>
+      <div class="eyebrow">目前考卷</div>
+      <h2 class="quiz-title" id="home-quiz-name"></h2>
+      <p class="muted" style="margin:4px 0 0;font-size:14px" id="home-quiz-info"></p>
     </div>
-
-    <form class="add-form" id="add-form" autocomplete="off">
-      <input type="text" id="input-en" placeholder="英文單字，例如 apple" maxlength="30">
-      <input type="text" id="input-zh" placeholder="中文意思，例如 蘋果" maxlength="30">
-      <button type="submit" class="btn btn-mint btn-small">➕ 新增</button>
-    </form>
-    <p class="form-msg" id="form-msg"></p>
-
-    <h3 style="margin:18px 0 0">目前單字（<span id="word-count">0</span> 個）</h3>
-    <ul class="word-list" id="word-list"></ul>
-  </div>
+    <div class="home-actions">
+      <button class="btn primary" id="btn-play" data-icon="play">開始考試</button>
+      <button class="btn" id="btn-home-mistakes" data-icon="book">錯題本</button>
+    </div>
+  </section>
 </section>
 
 <!-- ======================= 遊戲頁 ======================= -->
 <section id="screen-game" class="screen">
-  <div class="game-top">
-    <button class="btn btn-gray btn-small" id="btn-game-back">🏠 回首頁</button>
-    <div class="score-badge">⭐ 學會 <span id="score">0</span> 個</div>
+  <div class="topbar">
+    <button class="btn ghost small" id="btn-game-back" data-icon="back">首頁</button>
+    <span class="tag sun" id="game-quiz"></span>
+    <span class="spacer"></span>
+    <button class="btn small" id="btn-game-mistakes" data-icon="book">錯題本 <span class="count" id="game-mistake-count">0</span></button>
   </div>
 
-  <div class="card">
-    <!-- 三個階段的進度圓點 -->
-    <div class="stage-dots" id="stage-dots"></div>
-    <div class="stage-label" id="stage-label"></div>
-
-    <!-- 中文提示 -->
-    <div class="hint-box">
-      <span class="hint-zh" id="hint-zh"></span>
-    </div>
-
-    <!-- 字母格子（由 JS 動態渲染）-->
+  <section class="card">
+    <div class="progress"><span id="word-progress"></span><span class="sep">·</span><span id="stage-label">第 1 / 3 關</span><div class="bar"><i id="stage-bar"></i></div></div>
+    <div class="dots" id="stage-dots"></div>
+    <div class="zh-big"><span class="lbl">中文意思</span><span class="txt" id="hint-zh"></span></div>
+    <div class="stage-hint" id="stage-hint"></div>
     <div class="letters" id="letters"></div>
-
-    <div class="game-actions">
-      <button class="btn btn-sky" id="btn-speak">🔊 聽發音</button>
-      <button class="btn btn-pink" id="btn-submit">✅ 送出答案</button>
-      <button class="btn btn-purple" id="btn-restart-word">🔄 重考這個字</button>
-    </div>
     <div class="feedback" id="feedback"></div>
+    <div class="controls">
+      <button class="cbtn" id="btn-speak" data-icon="speaker">聽發音</button>
+      <button class="cbtn main" id="btn-submit" data-icon="check">送出答案</button>
+      <button class="cbtn" id="btn-restart-word" data-icon="again">重考這個字</button>
+    </div>
+  </section>
+</section>
+
+<!-- ======================= 錯題本頁 ======================= -->
+<section id="screen-mistakes" class="screen">
+  <div class="topbar">
+    <button class="btn ghost small" id="btn-mistakes-back" data-icon="back">首頁</button>
   </div>
+  <section class="card">
+    <div class="card-head">
+      <h2>錯題本</h2>
+      <p>以下單字曾經拼錯。在「練習錯題」中完整答對、沒有出錯，即會從錯題本移除。</p>
+    </div>
+    <ul class="list" id="mistake-list"></ul>
+    <div class="row"><button class="btn primary" id="btn-practice-mistakes" data-icon="play">練習錯題</button></div>
+  </section>
+</section>
+
+<!-- ======================= 家長設定頁 ======================= -->
+<section id="screen-parent" class="screen">
+  <div class="topbar">
+    <button class="btn ghost small" id="btn-parent-back" data-icon="back">首頁</button>
+    <h2 class="page-title">家長設定</h2>
+  </div>
+
+  <div class="seg" id="parent-tabs">
+    <button data-tab="quizzes" aria-pressed="true">考卷</button>
+    <button data-tab="report" aria-pressed="false">錯了哪些單字</button>
+  </div>
+
+  <!-- 考卷管理 -->
+  <div id="tab-quizzes" style="display:flex;flex-direction:column;gap:20px">
+    <section class="card">
+      <div class="card-head">
+        <h2>考卷列表</h2>
+        <p>按「考這張」設定孩子要考的考卷；按「編輯」修改考卷內的單字。</p>
+      </div>
+      <ul class="list" id="quiz-list"></ul>
+      <form class="add-form two" id="quiz-form" autocomplete="off">
+        <input type="text" id="input-quiz" placeholder="新考卷名稱，例如：考卷三、Unit 4" maxlength="20">
+        <button type="submit" class="btn primary" data-icon="plus">新增考卷</button>
+      </form>
+      <p class="form-msg" id="quiz-msg"></p>
+    </section>
+
+    <section class="card" id="quiz-editor">
+      <div class="card-head">
+        <h2>編輯：<span id="edit-quiz-title"></span></h2>
+        <span class="tag"><span id="word-count">0</span> 個單字</span>
+      </div>
+      <div class="field">
+        <label class="t" for="input-quiz-name">考卷名稱</label>
+        <div class="add-form two">
+          <input type="text" id="input-quiz-name" maxlength="20">
+          <button class="btn" id="btn-rename-quiz" data-icon="check">儲存名稱</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="t" for="input-en">新增單字</label>
+        <form class="add-form" id="add-form" autocomplete="off">
+          <input type="text" id="input-en" placeholder="英文，例如 apple" maxlength="30">
+          <input type="text" id="input-zh" placeholder="中文，例如 蘋果" maxlength="30">
+          <button type="submit" class="btn primary" data-icon="plus">新增</button>
+        </form>
+      </div>
+      <p class="form-msg" id="form-msg"></p>
+      <ul class="list" id="word-list"></ul>
+    </section>
+  </div>
+
+  <!-- 學習紀錄：錯了哪些單字 -->
+  <section class="card" id="tab-report" hidden>
+    <div class="card-head">
+      <h2>錯了哪些單字</h2>
+      <p>依錯誤次數排序。可依考卷篩選，或手動標記為已練會。</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="st-score">0</b><span>學會的單字</span></div>
+      <div class="stat"><b id="st-wrong">0</b><span>錯過的單字</span></div>
+      <div class="stat"><b id="st-left">0</b><span>還沒練會</span></div>
+    </div>
+    <div class="field">
+      <label class="t" for="report-quiz">考卷</label>
+      <select id="report-quiz"></select>
+    </div>
+    <div class="seg pill" id="report-filter">
+      <button data-f="open" aria-pressed="true">還沒練會</button>
+      <button data-f="all" aria-pressed="false">全部錯過的</button>
+      <button data-f="done" aria-pressed="false">已練會</button>
+    </div>
+    <ul class="list" id="report-list"></ul>
+    <div class="row"><span class="spacer"></span><button class="btn small danger" id="btn-clear-report" data-icon="trash">清除全部紀錄</button></div>
+  </section>
 </section>
 
 <!-- ======================= 彈窗：家長密碼 ======================= -->
 <div class="modal-mask" id="modal-password">
   <div class="modal">
-    <div class="big-emoji">🔐</div>
+    <div class="badge sky" data-icon="lock"></div>
     <h3>請輸入家長密碼</h3>
-    <input type="password" id="input-password" inputmode="numeric" maxlength="10">
+    <input type="password" id="input-password" inputmode="numeric" maxlength="10" style="text-align:center;font-size:22px;letter-spacing:8px">
     <p class="form-msg err" id="pw-msg"></p>
     <div class="row">
-      <button class="btn btn-gray btn-small" id="btn-pw-cancel">取消</button>
-      <button class="btn btn-purple btn-small" id="btn-pw-ok">確定</button>
+      <button class="btn" id="btn-pw-cancel">取消</button>
+      <button class="btn primary" id="btn-pw-ok">確定</button>
     </div>
   </div>
 </div>
 
-<!-- ======================= 彈窗：答錯提示 ======================= -->
+<!-- ======================= 彈窗：答錯 ======================= -->
 <div class="modal-mask" id="modal-wrong">
   <div class="modal">
-    <div class="big-emoji">🤗</div>
-    <h3>差一點點！記住正確拼法喔</h3>
-    <div class="correct-word" id="wrong-correct"></div>
-    <div class="your-answer" id="wrong-yours"></div>
-    <p>我們從第 1 關再練習一次吧！</p>
+    <div class="badge coral" data-icon="again"></div>
+    <h3>答案不正確</h3>
+    <div class="big-word" id="wrong-correct"></div>
+    <div class="muted" id="wrong-yours"></div>
+    <p style="margin:0" id="wrong-next"></p>
     <div class="row">
-      <button class="btn btn-pink" id="btn-retry">💪 再試一次</button>
+      <button class="btn" id="btn-wrong-speak" data-icon="speaker">聽發音</button>
+      <button class="btn primary" id="btn-retry" data-icon="again">再試一次</button>
     </div>
   </div>
 </div>
 
-<!-- ======================= 彈窗：單字過關 ======================= -->
+<!-- ======================= 彈窗：過關 / 考完 / 提示 ======================= -->
 <div class="modal-mask" id="modal-clear">
   <div class="modal">
-    <div class="big-emoji" id="clear-emoji">🎉</div>
-    <h3 id="clear-title">太厲害了！</h3>
-    <div class="correct-word" id="clear-word"></div>
-    <p id="clear-zh"></p>
+    <div class="stars" id="clear-stars"></div>
+    <div class="badge sun" id="clear-badge" data-icon="paper" hidden></div>
+    <h3 id="clear-title">這個單字你學會了！</h3>
+    <div class="big-word" id="clear-word"></div>
+    <p style="margin:0" id="clear-zh"></p>
+    <span class="tag leaf" id="clear-grad" hidden>已從錯題本移除</span>
+    <ul class="list" id="clear-list" hidden></ul>
     <div class="row" id="clear-extra">
-      <button class="btn btn-sky btn-small" id="btn-clear-speak">🔊 聽發音</button>
-      <button class="btn btn-purple btn-small" id="btn-clear-again">🔄 再考一次</button>
+      <button class="btn small" id="btn-clear-speak" data-icon="speaker">聽發音</button>
+      <button class="btn small" id="btn-clear-again" data-icon="again">再考一次</button>
     </div>
     <div class="row">
-      <button class="btn btn-mint" id="btn-next">下一個單字 ➡️</button>
+      <button class="btn" id="btn-alt" hidden></button>
+      <button class="btn primary" id="btn-next"></button>
     </div>
   </div>
 </div>
 
 <script>
 /* =============================================================
-   設定常數
+   圖示（SVG）。有 data-icon 屬性的元素會自動插入對應圖示
    ============================================================= */
-const PARENT_PASSWORD = '1234';                 // 家長密碼（寫死在程式碼中）
-const STORAGE_WORDS   = 'spellingGame.words';   // localStorage：單字庫
-const STORAGE_SCORE   = 'spellingGame.score';   // localStorage：學會的單字數
-
-// 預設測試單字：第一次開啟（localStorage 沒資料）時寫入
-const DEFAULT_WORDS = [
-  { en: 'apple',  zh: '蘋果' },
-  { en: 'banana', zh: '香蕉' },
-  { en: 'cat',    zh: '貓' },
-  { en: 'dog',    zh: '狗' },
-  { en: 'rabbit', zh: '兔子' },
-  { en: 'flower', zh: '花' },
-  { en: 'school', zh: '學校' },
-  { en: 'rainbow',zh: '彩虹' }
-];
+const ICON = {
+  play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  again:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v5h5"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  next:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
+  speaker:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="currentColor" fill-opacity=".15"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>',
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M5 4.5h10.5a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h10.5"/></svg>',
+  paper:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4M9 12h6M9 16h6"/></svg>',
+  star:'<svg viewBox="0 0 24 24"><path fill="#FFC23A" stroke="#E0A000" stroke-width="1.2" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>'
+};
+function applyIcons(root = document) {
+  root.querySelectorAll('[data-icon]').forEach(el => {
+    if (el.dataset.iconDone) return;
+    el.insertAdjacentHTML('afterbegin', ICON[el.dataset.icon] || '');
+    el.dataset.iconDone = '1';
+  });
+}
+applyIcons();
 
 /* =============================================================
-   localStorage 讀寫（包 try/catch，避免無痕模式等情況出錯）
+   設定常數 & localStorage
    ============================================================= */
-function loadWords() {
+const PARENT_PASSWORD = '1234';                     // 家長密碼（寫死在程式碼中）
+const STORAGE_QUIZZES = 'spellingGame.quizzes';     // 考卷：[{ id, name, words:[{en,zh}] }]
+const STORAGE_ACTIVE  = 'spellingGame.activeQuiz';  // 目前要考的考卷 id
+const STORAGE_SCORE   = 'spellingGame.kid.score';   // 學會的單字數
+const STORAGE_MISTAKE = 'spellingGame.kid.mistakes';// 錯題紀錄
+
+// 預設考卷：第一次開啟時寫入
+const DEFAULT_QUIZZES = [
+  { id: 'q1', name: '考卷一', words: [
+    { en: 'apple', zh: '蘋果' }, { en: 'banana', zh: '香蕉' }, { en: 'cat', zh: '貓' },
+    { en: 'dog', zh: '狗' }, { en: 'rabbit', zh: '兔子' }, { en: 'flower', zh: '花' } ] },
+  { id: 'q2', name: '考卷二', words: [
+    { en: 'school', zh: '學校' }, { en: 'rainbow', zh: '彩虹' }, { en: 'teacher', zh: '老師' },
+    { en: 'pencil', zh: '鉛筆' }, { en: 'water', zh: '水' }, { en: 'family', zh: '家人' },
+    { en: 'happy', zh: '快樂的' }, { en: 'yellow', zh: '黃色' }, { en: 'window', zh: '窗戶' },
+    { en: 'birthday', zh: '生日' } ] }
+];
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+
+function loadQuizzes() {
+  const q = store.get(STORAGE_QUIZZES, null);
+  if (!Array.isArray(q)) { store.set(STORAGE_QUIZZES, DEFAULT_QUIZZES); return JSON.parse(JSON.stringify(DEFAULT_QUIZZES)); }
+  return q;
+}
+function saveQuizzes(q) { store.set(STORAGE_QUIZZES, q); }
+function activeQuiz() {
+  const list = loadQuizzes();
+  return list.find(q => q.id === store.get(STORAGE_ACTIVE, '')) || list[0] || null;
+}
+function setActiveQuiz(id) { store.set(STORAGE_ACTIVE, id); }
+
+function loadScore() { return Number(store.get(STORAGE_SCORE, 0)) || 0; }
+function saveScore(n) { store.set(STORAGE_SCORE, n); }
+
+/* 錯題紀錄，每筆：{ en, zh, count, typed:[最近錯法], firstTime, lastTime, mastered, masteredTime }
+   練會（mastered）的單字不刪除，家長頁仍看得到「曾經錯過」。 */
+function loadMistakes() { const a = store.get(STORAGE_MISTAKE, []); return Array.isArray(a) ? a : []; }
+function saveMistakes(list) { store.set(STORAGE_MISTAKE, list); }
+function openMistakes() { return loadMistakes().filter(m => !m.mastered); }
+function recordMistake(word, typed) {
+  const list = loadMistakes();
+  const now = Date.now();
+  let m = list.find(x => x.en === word.en);
+  if (!m) { m = { en: word.en, zh: word.zh, count: 0, typed: [], firstTime: now }; list.push(m); }
+  m.count += 1;
+  m.zh = word.zh;
+  m.typed = [typed, ...(m.typed || []).filter(t => t !== typed)].slice(0, 3);
+  m.lastTime = now;
+  m.mastered = false;
+  delete m.masteredTime;
+  saveMistakes(list);
+}
+function markMastered(en, value = true) {
+  const list = loadMistakes();
+  const m = list.find(x => x.en === en);
+  if (!m) return;
+  m.mastered = value;
+  if (value) m.masteredTime = Date.now(); else delete m.masteredTime;
+  saveMistakes(list);
+}
+
+/* 舊版資料搬家：舊單字庫 → 考卷一；舊的（第一位小朋友的）分數與錯題 → 現在的紀錄 */
+(function migrateOld() {
   try {
-    const raw = localStorage.getItem(STORAGE_WORDS);
-    if (raw === null) {                 // 第一次開啟：寫入預設單字
-      saveWords(DEFAULT_WORDS);
-      return DEFAULT_WORDS.slice();
+    if (localStorage.getItem(STORAGE_QUIZZES) === null) {
+      const oldWords = store.get('spellingGame.words', null);
+      if (Array.isArray(oldWords) && oldWords.length) {
+        saveQuizzes([{ id: 'q1', name: '考卷一', words: oldWords }]);
+      }
     }
-    const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr : [];
-  } catch (e) {
-    return DEFAULT_WORDS.slice();
-  }
-}
-function saveWords(words) {
-  try { localStorage.setItem(STORAGE_WORDS, JSON.stringify(words)); } catch (e) {}
-}
-function loadScore() {
-  try { return parseInt(localStorage.getItem(STORAGE_SCORE), 10) || 0; } catch (e) { return 0; }
-}
-function saveScore(n) {
-  try { localStorage.setItem(STORAGE_SCORE, String(n)); } catch (e) {}
-}
+    if (localStorage.getItem(STORAGE_MISTAKE) === null) {
+      const players = store.get('spellingGame.players', null);
+      const pid = Array.isArray(players) && players[0] ? players[0].id : 'p1';
+      const m = store.get(`spellingGame.p.${pid}.mistakes`, null);
+      const s = store.get(`spellingGame.p.${pid}.score`, null);
+      if (Array.isArray(m)) saveMistakes(m);
+      if (s !== null) saveScore(Number(s) || 0);
+      const oldM = store.get('spellingGame.mistakes', null);   // 更舊的版本
+      if (!Array.isArray(m) && Array.isArray(oldM)) {
+        saveMistakes(oldM.map(x => ({ en: x.en, zh: x.zh, count: x.count || 1, typed: x.lastTyped ? [x.lastTyped] : [],
+          firstTime: x.lastTime || Date.now(), lastTime: x.lastTime || Date.now(), mastered: false })));
+      }
+      const oldS = localStorage.getItem('spellingGame.score');
+      if (s === null && oldS !== null) saveScore(parseInt(oldS, 10) || 0);
+    }
+  } catch (e) {}
+})();
 
 /* =============================================================
    小工具
    ============================================================= */
 const $ = (id) => document.getElementById(id);
-
-// 切換畫面：所有 .screen 先隱藏，再顯示指定的那一個
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $('screen-' + name).classList.add('active');
@@ -431,190 +524,275 @@ function showScreen(name) {
 }
 function openModal(id)  { $(id).classList.add('show'); }
 function closeModal(id) { $(id).classList.remove('show'); }
-
-// 洗牌（Fisher–Yates），用來隨機出題
-function shuffle(arr) {
+function shuffle(arr) {               // Fisher–Yates 洗牌
   const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
 }
-
-// 彩帶特效：產生一堆彩色小方塊從上往下掉，動畫結束後移除
-function confetti(count = 80) {
-  const colors = ['#ff8fb8', '#b98cff', '#ffd95e', '#6fe0c2', '#7cc8ff', '#ff6b6b'];
+function fmtDate(t) { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()}`; }
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function iconBtn(icon, title, onClick, extra = '') {
+  const b = el('button', 'icon-btn ' + extra); b.innerHTML = ICON[icon]; b.title = title; b.setAttribute('aria-label', title);
+  b.addEventListener('click', onClick); return b;
+}
+function textBtn(icon, text, onClick, cls = 'btn small') {
+  const b = el('button', cls); b.innerHTML = ICON[icon]; b.append(text); b.addEventListener('click', onClick); return b;
+}
+function confetti() { return; /* 正式風格：不使用彩帶 */ }
+function _unusedConfetti(count = 70) {
+  const colors = ['#23A866', '#FFC23A', '#2F86D8', '#FF6A55', '#9BD7F5'];
   for (let i = 0; i < count; i++) {
-    const c = document.createElement('div');
-    c.className = 'confetti';
+    const c = el('div', 'confetti');
     c.style.left = Math.random() * 100 + 'vw';
     c.style.background = colors[i % colors.length];
-    c.style.animationDuration = (1.8 + Math.random() * 1.8) + 's';
-    c.style.animationDelay = (Math.random() * 0.5) + 's';
-    c.style.transform = `rotate(${Math.random() * 360}deg)`;
+    c.style.animationDuration = (1.8 + Math.random() * 1.6) + 's';
+    c.style.animationDelay = (Math.random() * .4) + 's';
     document.body.appendChild(c);
-    setTimeout(() => c.remove(), 4500);
+    setTimeout(() => c.remove(), 4200);
   }
 }
 
 /* -------------------------------------------------------------
-   念出單字：優先使用 Google 翻譯的發音
-   1. 先用 <audio> 播放 Google 翻譯的語音網址（需要連網）
-   2. 若播放失敗（離線、被擋），改用瀏覽器內建語音，
-      並盡量挑選名稱含 "Google" 的美式英文語音（Chrome 內建，音色接近 Google 翻譯）
+   念出單字：優先使用 Google 翻譯的發音（需連網），
+   失敗時改用瀏覽器內建語音（優先挑名稱含 Google 的美式英文）
    ------------------------------------------------------------- */
 let currentAudio = null;
-
-function googleTtsUrl(text) {
-  return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en'
-       + '&q=' + encodeURIComponent(text);
-}
-
 function speak(text) {
-  // 停掉上一次還在念的聲音，避免重疊
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-
-  const audio = new Audio(googleTtsUrl(text));
+  const audio = new Audio('https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q=' + encodeURIComponent(text));
   currentAudio = audio;
   let fellBack = false;
-  const fallback = () => {
-    if (fellBack || currentAudio !== audio) return;
-    fellBack = true;
-    speakWithBrowser(text);
-  };
+  const fallback = () => { if (fellBack || currentAudio !== audio) return; fellBack = true; speakWithBrowser(text); };
   audio.addEventListener('error', fallback);
-  const p = audio.play();
-  if (p && p.catch) p.catch(fallback);
-}
-
-// 備援：瀏覽器內建語音
-function pickEnglishVoice() {
-  const voices = window.speechSynthesis.getVoices();
-  return voices.find(v => /google/i.test(v.name) && v.lang === 'en-US')
-      || voices.find(v => /google/i.test(v.name) && /^en/i.test(v.lang))
-      || voices.find(v => v.lang === 'en-US')
-      || voices.find(v => /^en/i.test(v.lang))
-      || null;
+  const p = audio.play(); if (p && p.catch) p.catch(fallback);
 }
 function speakWithBrowser(text) {
   if (!('speechSynthesis' in window)) return;
+  const voices = window.speechSynthesis.getVoices();
+  const v = voices.find(v => /google/i.test(v.name) && v.lang === 'en-US') || voices.find(v => /google/i.test(v.name) && /^en/i.test(v.lang))
+         || voices.find(v => v.lang === 'en-US') || voices.find(v => /^en/i.test(v.lang));
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-US';
-  u.rate = 0.85;
-  const v = pickEnglishVoice();
-  if (v) u.voice = v;
+  u.lang = 'en-US'; u.rate = .85; if (v) u.voice = v;
   window.speechSynthesis.speak(u);
 }
-// 有些瀏覽器的語音清單是非同步載入的，先觸發一次
-if ('speechSynthesis' in window) {
-  window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+if ('speechSynthesis' in window) { window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices(); }
+
+/* =============================================================
+   首頁
+   ============================================================= */
+function renderHome() {
+  const q = activeQuiz();
+  $('home-quiz-name').textContent = q ? q.name : '尚未設定考卷';
+  // 只有在沒有考卷或考卷沒有單字時才顯示提示
+  $('home-quiz-info').textContent = !q ? '請到「家長設定」新增考卷。'
+    : (q.words.length ? '' : '這張考卷還沒有單字，請到「家長設定」新增。');
+  $('home-quiz-info').hidden = !$('home-quiz-info').textContent;
+  $('btn-play').disabled = !q || !q.words.length;
 }
 
 /* =============================================================
-   首頁 & 密碼防護
+   家長密碼
    ============================================================= */
-$('btn-play').addEventListener('click', startGame);
-
 $('btn-parent').addEventListener('click', () => {
-  $('input-password').value = '';
-  $('pw-msg').textContent = '';
+  $('input-password').value = ''; $('pw-msg').textContent = '';
   openModal('modal-password');
   setTimeout(() => $('input-password').focus(), 50);
 });
 function checkPassword() {
-  if ($('input-password').value === PARENT_PASSWORD) {
-    closeModal('modal-password');
-    renderWordList();
-    showScreen('parent');
-  } else {
-    $('pw-msg').textContent = '密碼錯誤，請再試一次';
-    $('input-password').value = '';
-    $('input-password').focus();
-  }
+  if ($('input-password').value === PARENT_PASSWORD) { closeModal('modal-password'); openParent(); }
+  else { $('pw-msg').textContent = '密碼錯誤，請再試一次'; $('input-password').value = ''; $('input-password').focus(); }
 }
 $('btn-pw-ok').addEventListener('click', checkPassword);
 $('input-password').addEventListener('keydown', e => { if (e.key === 'Enter') checkPassword(); });
 $('btn-pw-cancel').addEventListener('click', () => closeModal('modal-password'));
 
 /* =============================================================
-   家長設定頁：單字庫管理
+   家長設定頁
    ============================================================= */
-let words = loadWords();
+const parentState = { tab: 'quizzes', editId: null, filter: 'open', reportQuiz: 'all' };
 
-function renderWordList() {
-  const ul = $('word-list');
-  ul.innerHTML = '';
-  $('word-count').textContent = words.length;
+function openParent() {
+  const a = activeQuiz();
+  if (!parentState.editId && a) parentState.editId = a.id;
+  setTab(parentState.tab);
+  showScreen('parent');
+}
+function setTab(tab) {
+  parentState.tab = tab;
+  $('parent-tabs').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tab === tab)));
+  $('tab-quizzes').hidden = tab !== 'quizzes';
+  $('tab-report').hidden = tab !== 'report';
+  if (tab === 'quizzes') renderQuizzes();
+  if (tab === 'report') renderReport();
+}
+$('parent-tabs').querySelectorAll('button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+$('btn-parent-back').addEventListener('click', goHome);
 
-  if (words.length === 0) {
-    ul.innerHTML = '<li class="empty-hint">目前沒有單字，請在上方新增 🙂</li>';
-    return;
-  }
-  words.forEach((w, index) => {
-    const li = document.createElement('li');
-    const info = document.createElement('div');
-    const en = document.createElement('span');
-    en.className = 'en'; en.textContent = w.en;          // 用 textContent 避免 HTML 注入
-    const zh = document.createElement('span');
-    zh.className = 'zh'; zh.textContent = w.zh;
-    info.append(en, zh);
+/* ---------- 考卷列表 ---------- */
+function renderQuizzes() {
+  const quizzes = loadQuizzes();
+  const active = activeQuiz();
+  if (!quizzes.some(q => q.id === parentState.editId)) parentState.editId = quizzes[0] ? quizzes[0].id : null;
 
-    const del = document.createElement('button');
-    del.className = 'btn btn-red btn-small';
-    del.textContent = '🗑️ 刪除';
-    del.addEventListener('click', () => {
-      words.splice(index, 1);   // 從陣列移除
-      saveWords(words);         // 同步寫回 localStorage
-      renderWordList();
-    });
+  const ul = $('quiz-list'); ul.innerHTML = '';
+  if (!quizzes.length) ul.appendChild(el('li', 'empty', '還沒有考卷，請在下方新增'));
+  quizzes.forEach(q => {
+    const isActive = active && q.id === active.id;
+    const li = el('li', 'item' + (isActive ? ' active' : '') + (q.id === parentState.editId ? ' editing' : ''));
+    const info = el('div', 'info');
+    info.append(el('div', 'en', q.name));
+    const meta = el('div', 'meta');
+    meta.append(el('span', null, `${q.words.length} 個單字`));
+    if (isActive) meta.append(el('span', 'tag leaf', '孩子正在考這張'));
+    if (q.id === parentState.editId) meta.append(el('span', 'tag', '編輯中'));
+    info.append(meta);
+    const actions = el('div', 'actions');
+    if (!isActive) actions.append(textBtn('check', '考這張', () => { setActiveQuiz(q.id); renderQuizzes(); }, 'btn small primary'));
+    actions.append(textBtn('edit', '編輯', () => { parentState.editId = q.id; renderQuizzes(); $('quiz-editor').scrollIntoView({ behavior: 'smooth' }); }));
+    actions.append(iconBtn('trash', '刪除考卷', () => {
+      if (!confirm(`確定要刪除「${q.name}」嗎？裡面的 ${q.words.length} 個單字會一起刪除。`)) return;
+      saveQuizzes(loadQuizzes().filter(x => x.id !== q.id));
+      renderQuizzes();
+    }, 'danger'));
+    li.append(info, actions);
+    ul.appendChild(li);
+  });
+  renderEditor();
+}
+$('quiz-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('input-quiz').value.trim();
+  const msg = $('quiz-msg');
+  if (!name) { msg.className = 'form-msg err'; msg.textContent = '請輸入考卷名稱'; return; }
+  const list = loadQuizzes();
+  const q = { id: 'q' + Date.now().toString(36), name, words: [] };
+  list.push(q); saveQuizzes(list);
+  if (list.length === 1) setActiveQuiz(q.id);
+  parentState.editId = q.id;
+  $('input-quiz').value = '';
+  msg.className = 'form-msg ok'; msg.textContent = `已新增「${name}」，請在下方加入單字`;
+  renderQuizzes();
+  $('input-en').focus();
+});
 
-    // 發音按鈕：讓家長確認瀏覽器念得對不對
-    const say = document.createElement('button');
-    say.className = 'btn btn-sky btn-small';
-    say.textContent = '🔊';
-    say.title = '聽發音';
-    say.addEventListener('click', () => speak(w.en));
+/* ---------- 編輯某一張考卷的單字 ---------- */
+function editingQuiz() { return loadQuizzes().find(q => q.id === parentState.editId) || null; }
+function updateEditingQuiz(fn) {
+  const list = loadQuizzes();
+  const q = list.find(x => x.id === parentState.editId);
+  if (!q) return;
+  fn(q); saveQuizzes(list);
+}
+function renderEditor() {
+  const q = editingQuiz();
+  $('quiz-editor').hidden = !q;
+  if (!q) return;
+  $('edit-quiz-title').textContent = q.name;
+  $('input-quiz-name').value = q.name;
+  $('word-count').textContent = q.words.length;
 
-    const actions = document.createElement('div');
-    actions.style.display = 'flex';
-    actions.style.gap = '8px';
-    actions.append(say, del);
-
+  const ul = $('word-list'); ul.innerHTML = '';
+  if (!q.words.length) { ul.appendChild(el('li', 'empty', '這張考卷還沒有單字，請在上方新增')); return; }
+  const openSet = new Set(openMistakes().map(m => m.en));
+  q.words.forEach((w, index) => {
+    const li = el('li', 'item');
+    const info = el('div', 'info');
+    const head = el('div'); head.append(el('span', 'en', w.en), el('span', 'zh', w.zh));
+    info.append(head);
+    if (openSet.has(w.en)) { const meta = el('div', 'meta'); meta.append(el('span', 'tag coral', '還沒練會')); info.append(meta); }
+    const actions = el('div', 'actions');
+    actions.append(
+      iconBtn('speaker', '聽發音', () => speak(w.en)),
+      iconBtn('trash', '刪除', () => { updateEditingQuiz(x => x.words.splice(index, 1)); renderQuizzes(); }, 'danger'));
     li.append(info, actions);
     ul.appendChild(li);
   });
 }
-
+$('btn-rename-quiz').addEventListener('click', () => {
+  const name = $('input-quiz-name').value.trim();
+  if (!name) return;
+  updateEditingQuiz(q => { q.name = name; });
+  renderQuizzes();
+});
 $('add-form').addEventListener('submit', (e) => {
   e.preventDefault();
+  const q = editingQuiz(); if (!q) return;
   const en = $('input-en').value.trim().toLowerCase().replace(/\s+/g, ' ');
   const zh = $('input-zh').value.trim();
   const msg = $('form-msg');
-
-  // 防呆檢查
-  if (!en || !zh) {
-    msg.className = 'form-msg err'; msg.textContent = '英文和中文都要填寫喔！'; return;
-  }
-  // 只允許英文字母、空白、連字號、撇號（例如 ice cream、T-shirt、don't）
-  if (!/^[a-z][a-z \-']*$/.test(en) || !/[a-z]/.test(en)) {
-    msg.className = 'form-msg err'; msg.textContent = '英文單字只能包含英文字母（可含空白或 -）'; return;
-  }
-  if (words.some(w => w.en === en)) {
-    msg.className = 'form-msg err'; msg.textContent = `「${en}」已經在單字庫裡了`; return;
-  }
-
-  words.push({ en, zh });
-  saveWords(words);                 // 同步寫回 localStorage
-  renderWordList();
+  const err = t => { msg.className = 'form-msg err'; msg.textContent = t; };
+  if (!en || !zh) return err('英文和中文都要填寫');
+  if (!/^[a-z][a-z \-']*$/.test(en)) return err('英文單字只能包含英文字母（可含空白或 -）');
+  if (q.words.some(w => w.en === en)) return err(`「${en}」已經在這張考卷裡了`);
+  updateEditingQuiz(x => x.words.push({ en, zh }));
+  renderQuizzes();
   msg.className = 'form-msg ok'; msg.textContent = `已新增：${en}（${zh}）`;
-  $('input-en').value = ''; $('input-zh').value = '';
-  $('input-en').focus();
+  $('input-en').value = ''; $('input-zh').value = ''; $('input-en').focus();
 });
 
-$('btn-parent-back').addEventListener('click', () => showScreen('home'));
+/* ---------- 錯了哪些單字 ---------- */
+function renderReport() {
+  // 考卷篩選選單
+  const sel = $('report-quiz');
+  const quizzes = loadQuizzes();
+  if (parentState.reportQuiz !== 'all' && !quizzes.some(q => q.id === parentState.reportQuiz)) parentState.reportQuiz = 'all';
+  sel.innerHTML = '';
+  sel.append(new Option('全部考卷', 'all'));
+  quizzes.forEach(q => sel.append(new Option(`${q.name}（${q.words.length} 個單字）`, q.id)));
+  sel.value = parentState.reportQuiz;
+
+  $('report-filter').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.f === parentState.filter)));
+
+  // 若選了某張考卷，只看那張考卷裡的單字
+  let all = loadMistakes();
+  if (parentState.reportQuiz !== 'all') {
+    const q = quizzes.find(x => x.id === parentState.reportQuiz);
+    const inQuiz = new Set(q.words.map(w => w.en));
+    all = all.filter(m => inQuiz.has(m.en));
+  }
+  const open = all.filter(m => !m.mastered);
+  $('st-score').textContent = loadScore();
+  $('st-wrong').textContent = all.length;
+  $('st-left').textContent = open.length;
+
+  let list = parentState.filter === 'open' ? open : parentState.filter === 'done' ? all.filter(m => m.mastered) : all;
+  list = list.slice().sort((a, b) => b.count - a.count || b.lastTime - a.lastTime);
+
+  // 每個單字屬於哪些考卷
+  const quizOf = {};
+  quizzes.forEach(q => q.words.forEach(w => { (quizOf[w.en] = quizOf[w.en] || []).push(q.name); }));
+
+  const ul = $('report-list'); ul.innerHTML = '';
+  if (!list.length) {
+    ul.appendChild(el('li', 'empty', { open: '目前沒有還沒練會的單字', all: '還沒有錯過任何單字', done: '還沒有練會的錯題' }[parentState.filter]));
+    return;
+  }
+  list.forEach(m => {
+    const li = el('li', 'item');
+    const info = el('div', 'info');
+    const head = el('div'); head.append(el('span', 'en', m.en), el('span', 'zh', m.zh));
+    const meta = el('div', 'meta');
+    meta.append(el('span', 'tag ' + (m.mastered ? 'leaf' : 'coral'), m.mastered ? '已練會' : '還沒練會'),
+      el('span', null, `錯 ${m.count} 次`),
+      el('span', null, `拼成：${(m.typed || []).join('、') || '—'}`),
+      el('span', null, `最近錯在 ${fmtDate(m.lastTime)}`));
+    if (quizOf[m.en]) meta.append(el('span', null, quizOf[m.en].join('、')));
+    info.append(head, meta);
+    const actions = el('div', 'actions');
+    actions.append(iconBtn('speaker', '聽發音', () => speak(m.en)));
+    if (m.mastered) actions.append(iconBtn('again', '放回錯題本', () => { markMastered(m.en, false); renderReport(); }));
+    else actions.append(iconBtn('check', '標記為已練會', () => { markMastered(m.en, true); renderReport(); }));
+    li.append(info, actions);
+    ul.appendChild(li);
+  });
+}
+$('report-quiz').addEventListener('change', e => { parentState.reportQuiz = e.target.value; renderReport(); });
+$('report-filter').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { parentState.filter = b.dataset.f; renderReport(); }));
+$('btn-clear-report').addEventListener('click', () => {
+  if (!confirm('確定要清除分數和所有錯題紀錄嗎？')) return;
+  saveMistakes([]); saveScore(0); renderReport();
+});
 
 /* =============================================================
    ★ 核心：漸進式挖空邏輯 ★
@@ -638,38 +816,20 @@ $('btn-parent-back').addEventListener('click', () => showScreen('home'));
      第 2 關 k=4 → _ _ _ _ h a n t
      第 3 關 k=6 → _ _ _ _ _ _ n t
      第 4 關 k=8 → _ _ _ _ _ _ _ _
-   以 apple（n=5，共 3 關）為例：
-     第 1 關 k=2 → _ _ p l e
-     第 2 關 k=4 → _ _ _ _ e
-     第 3 關 k=min(6,5)=5 → _ _ _ _ _
-   以 ice cream 為例（空白不算字母，letterIdx = [0,1,2,4,5,6,7,8]，n=8）：
-     第 2 關 slice(0,4) → 索引 0,1,2,4 → _ _ _   _ r e a m
+
+   答錯時：停在「同一關」重考，不會退回第 1 關。
    ============================================================= */
+const HIDE_STEP = 2;
 
-const HIDE_STEP = 2;   // 每過一關多挖幾個字母（想改成每關多挖 3 個就改這裡）
-
-/** 取得單字中所有「英文字母」所在的索引 */
 function getLetterIndices(word) {
   const idx = [];
-  for (let i = 0; i < word.length; i++) {
-    if (/[a-z]/i.test(word[i])) idx.push(i);
-  }
+  for (let i = 0; i < word.length; i++) if (/[a-z]/i.test(word[i])) idx.push(i);
   return idx;
 }
-
-/** 這個單字總共有幾關：ceil(字母數 / 2)，至少 1 關 */
 function getTotalStages(word) {
-  const n = getLetterIndices(word).length;
-  return Math.max(1, Math.ceil(n / HIDE_STEP));
+  return Math.max(1, Math.ceil(getLetterIndices(word).length / HIDE_STEP));
 }
-
-/**
- * 產生遮罩：回傳一個與單字等長的布林陣列，true 代表該位置要挖空。
- * 作法：
- *   1. letterIdx = 所有英文字母的索引
- *   2. k = min(stage × 2, 字母數)：第幾關就挖前面幾個字母，不超出單字長度
- *   3. 取 letterIdx.slice(0, k)，把這些索引在 mask 上標記為 true
- */
+/** 回傳與單字等長的布林陣列，true = 這個位置要挖空 */
 function buildMask(word, stage) {
   const letterIdx = getLetterIndices(word);
   const k = Math.min(stage * HIDE_STEP, letterIdx.length);
@@ -679,51 +839,113 @@ function buildMask(word, stage) {
 }
 
 /* =============================================================
-   遊戲狀態
+   遊戲狀態與流程
    ============================================================= */
 const game = {
-  queue: [],       // 出題順序（洗牌後的單字陣列）
-  current: null,   // 目前的單字物件 { en, zh }
-  stage: 1,        // 目前第幾關（1 ~ totalStages）
-  totalStages: 3,  // 目前單字總關數（依字母數決定）
-  mask: [],        // 目前階段的挖空遮罩
-  locked: false,   // 動畫進行中暫時鎖住，避免連按
-  score: loadScore()
+  queue: [], current: null,
+  total: 0,              // 這一輪共有幾個單字
+  done: 0,               // 這一輪已完成幾個
+  roundWrong: [],        // 這一輪錯過的單字（考完顯示）
+  quizName: '',
+  stage: 1, totalStages: 1, mask: [],
+  locked: false,
+  mode: 'normal',        // 'normal' 考考卷 / 'mistakes' 練習錯題
+  wrongThisWord: false
 };
 
 function startGame() {
-  words = loadWords();
-  if (words.length === 0) {
-    alertNoWords();
-    return;
-  }
+  const q = activeQuiz();
+  if (!q || !q.words.length) { showInfoModal('尚無單字', '請到「家長設定」設定考卷與單字。', '確定', goHome); return; }
+  startRound('normal', q.name, q.words);
+}
+function startMistakePractice() {
+  const list = openMistakes();
+  if (!list.length) return;
+  startRound('mistakes', '錯題練習', list.map(m => ({ en: m.en, zh: m.zh })));
+}
+function startRound(mode, name, words) {
+  game.mode = mode;
+  game.quizName = name;
   game.queue = shuffle(words);
-  $('score').textContent = game.score;
+  game.total = words.length;
+  game.done = 0;
+  game.roundWrong = [];
+  $('game-quiz').textContent = name;
+  updateCounts();
   showScreen('game');
   nextWord();
 }
-
-function alertNoWords() {
-  // 單字庫為空時，用過關彈窗顯示提示
-  $('clear-emoji').textContent = '📭';
-  $('clear-title').textContent = '還沒有單字喔！';
-  $('clear-word').textContent = '';
-  $('clear-zh').textContent = '請爸爸媽媽到「家長設定」新增單字';
-  $('clear-extra').style.display = 'none';   // 沒有單字時不顯示發音/再考按鈕
-  $('btn-next').textContent = '好的';
-  $('btn-next').onclick = () => { closeModal('modal-clear'); showScreen('home'); };
-  openModal('modal-clear');
+function updateCounts() {
+  $('game-mistake-count').textContent = openMistakes().length;
+  $('word-progress').textContent = `第 ${Math.min(game.done + 1, game.total)} / ${game.total} 個單字`;
 }
 
-// 取下一個單字；佇列用完就重新洗牌，無限循環
 function nextWord() {
-  if (game.queue.length === 0) game.queue = shuffle(loadWords());
-  if (game.queue.length === 0) { alertNoWords(); return; }
+  if (!game.queue.length) { finishRound(); return; }
   game.current = game.queue.shift();
+  game.wrongThisWord = false;
+  updateCounts();
   startStage(1);
 }
 
-// 進入某個單字的某個階段
+/* 一輪考完：顯示這次錯了哪些單字 */
+function finishRound() {
+  const wrong = game.roundWrong;
+  const perfect = !wrong.length;
+  if (game.mode === 'mistakes') {
+    const left = openMistakes().length;
+    showInfoModal(left ? '錯題練習完成' : '錯題已全部練會',
+      left ? `尚有 ${left} 個單字需要再複習。` : '錯題本已清空。',
+      '回錯題本', showMistakeScreen, !left);
+  } else {
+    showInfoModal(perfect ? `${game.quizName}：全部答對` : `${game.quizName}：測驗結束`,
+      perfect ? `共 ${game.total} 個單字，皆一次答對。` : `共 ${game.total} 個單字，以下 ${wrong.length} 個曾答錯：`,
+      '回首頁', goHome, perfect);
+  }
+  // 列出這一輪錯的單字
+  const ul = $('clear-list'); ul.innerHTML = '';
+  ul.hidden = !wrong.length;
+  wrong.forEach(w => {
+    const li = el('li', 'item');
+    const info = el('div', 'info'); info.append(el('span', 'en', w.en), el('span', 'zh', w.zh));
+    li.append(info, iconBtn('speaker', '聽發音', () => speak(w.en)));
+    ul.appendChild(li);
+  });
+  // 第二顆按鈕：再考一次
+  const alt = $('btn-alt');
+  alt.hidden = false;
+  alt.innerHTML = ICON.again;
+  alt.append(game.mode === 'mistakes' ? '再練一次' : '再考一次這張');
+  alt.onclick = () => { closeModal('modal-clear'); game.mode === 'mistakes' ? startMistakePractice() : startGame(); };
+  if (game.mode === 'mistakes' && !openMistakes().length) alt.hidden = true;
+}
+
+// 彈窗上方的圓形圖示：成功用勾勾，一般提示用考卷圖示
+function setBadge(kind) {
+  const b = $('clear-badge');
+  b.hidden = false;
+  b.className = 'badge ' + (kind === 'ok' ? 'ok' : 'sun');
+  b.innerHTML = kind === 'ok' ? ICON.check : ICON.paper;
+}
+function showInfoModal(title, text, btnText, onNext, celebrate) {
+  $('clear-stars').hidden = true;
+  setBadge(celebrate ? 'ok' : 'info');
+  $('clear-title').textContent = title;
+  $('clear-word').hidden = true;
+  $('clear-zh').textContent = text;
+  $('clear-grad').hidden = true;
+  $('clear-extra').hidden = true;
+  $('clear-list').hidden = true;
+  $('btn-alt').hidden = true;
+  setNextButton(btnText, onNext);
+  openModal('modal-clear');
+}
+function setNextButton(text, onNext) {
+  const b = $('btn-next');
+  b.innerHTML = ICON.next; b.append(text);
+  b.onclick = () => { closeModal('modal-clear'); onNext(); };
+}
+
 function startStage(stage) {
   game.stage = stage;
   game.totalStages = getTotalStages(game.current.en);
@@ -731,64 +953,40 @@ function startStage(stage) {
   game.locked = false;
 
   $('hint-zh').textContent = game.current.zh;
-  $('feedback').textContent = '';
-
-  // 關卡說明：最後一關（全挖空）給特別的鼓勵
+  $('feedback').textContent = ''; $('feedback').className = 'feedback';
+  $('stage-label').textContent = `第 ${stage} / ${game.totalStages} 關`;
+  $('stage-bar').style.width = ((stage - 1) / game.totalStages * 100) + '%';
   const hidden = game.mask.filter(Boolean).length;
-  $('stage-label').textContent = stage === game.totalStages
-    ? `第 ${stage} / ${game.totalStages} 關：全部自己拼出來！🌟`
-    : `第 ${stage} / ${game.totalStages} 關：填上 ${hidden} 個字母 🌱`;
+  $('stage-hint').textContent = stage === game.totalStages ? '最後一關：整個單字自己拼出來' : `填上前面 ${hidden} 個字母`;
 
-  // 依總關數動態產生進度圓點
-  const dots = $('stage-dots');
-  dots.innerHTML = '';
+  const dots = $('stage-dots'); dots.innerHTML = '';
   for (let s = 1; s <= game.totalStages; s++) {
-    const dot = document.createElement('div');
-    dot.className = 'stage-dot' + (s < stage ? ' done' : '') + (s === stage ? ' current' : '');
-    dot.textContent = s < stage ? '✓' : s;
-    dots.appendChild(dot);
+    const d = el('div', 'dot' + (s < stage ? ' done' : '') + (s === stage ? ' cur' : ''));
+    if (s < stage) d.innerHTML = ICON.check; else d.textContent = s;
+    dots.appendChild(d);
   }
-
   renderLetters();
 }
 
-/**
- * 渲染字母格子：
- * 逐一走訪單字的每個字元 i：
- *   - mask[i] 為 true  → 渲染 <input maxlength=1>，並記錄 data-index = i
- *   - 非字母（空白 / - / '）→ 渲染不可編輯的符號格
- *   - 其餘（未挖空字母）→ 渲染黃色字母方塊
- */
+/* 渲染字母格：mask[i] 為 true → 輸入框；非字母 → 符號格；其他 → 顯示字母 */
 function renderLetters() {
   const box = $('letters');
-  box.className = 'letters';
-  box.innerHTML = '';
+  box.className = 'letters'; box.innerHTML = '';
   const word = game.current.en;
-
   for (let i = 0; i < word.length; i++) {
     const ch = word[i];
     if (game.mask[i]) {
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.maxLength = 1;
-      input.className = 'letter-input';
-      input.dataset.index = i;           // 記住這格對應單字的哪個位置
-      input.autocomplete = 'off';
-      input.autocapitalize = 'off';
-      input.spellcheck = false;
+      const input = el('input', 'letter-input');
+      input.type = 'text'; input.maxLength = 1;
+      input.dataset.index = i;               // 對應單字中的位置
+      input.autocomplete = 'off'; input.autocapitalize = 'off'; input.spellcheck = false;
       input.setAttribute('autocorrect', 'off');
       input.setAttribute('aria-label', `第 ${i + 1} 個字母`);
       box.appendChild(input);
     } else if (!/[a-z]/i.test(ch)) {
-      const sym = document.createElement('div');
-      sym.className = 'tile symbol';
-      sym.textContent = ch === ' ' ? '' : ch;
-      box.appendChild(sym);
+      box.appendChild(el('div', 'tile symbol', ch === ' ' ? '' : ch));
     } else {
-      const tile = document.createElement('div');
-      tile.className = 'tile';
-      tile.textContent = ch;
-      box.appendChild(tile);
+      box.appendChild(el('div', 'tile', ch));
     }
   }
   bindInputNavigation();
@@ -796,149 +994,136 @@ function renderLetters() {
   if (first) first.focus();
 }
 
-/**
- * 輸入框的自動跳格與防呆：
- * - 只接受英文字母，其他字元直接清掉
- * - 輸入一個字母後自動跳到「下一個輸入框」
- * - 在空格按 Backspace 會跳回上一格並清除
- * - 左右方向鍵可移動；Enter 直接送出
- */
+/* 輸入框防呆：只收英文字母、自動跳下一格、Backspace 回上一格、Enter 送出 */
 function bindInputNavigation() {
   const inputs = Array.from(document.querySelectorAll('#letters .letter-input'));
-
   inputs.forEach((input, pos) => {
     input.addEventListener('input', () => {
-      // 只保留最後輸入的一個英文字母（處理手機輸入法一次塞多個字的情況）
       const letters = input.value.replace(/[^a-z]/gi, '');
       input.value = letters ? letters.slice(-1).toLowerCase() : '';
       input.classList.toggle('filled', !!input.value);
-      if (input.value && pos < inputs.length - 1) {
-        inputs[pos + 1].focus();
-        inputs[pos + 1].select();
-      }
+      if (input.value && pos < inputs.length - 1) { inputs[pos + 1].focus(); inputs[pos + 1].select(); }
     });
-
-    input.addEventListener('keydown', (e) => {
+    input.addEventListener('keydown', e => {
       if (e.key === 'Backspace' && !input.value && pos > 0) {
-        e.preventDefault();
-        inputs[pos - 1].value = '';
-        inputs[pos - 1].classList.remove('filled');
-        inputs[pos - 1].focus();
-      } else if (e.key === 'ArrowLeft' && pos > 0) {
-        e.preventDefault(); inputs[pos - 1].focus();
-      } else if (e.key === 'ArrowRight' && pos < inputs.length - 1) {
-        e.preventDefault(); inputs[pos + 1].focus();
-      } else if (e.key === 'Enter') {
-        e.preventDefault(); submitAnswer();
-      }
+        e.preventDefault(); inputs[pos - 1].value = ''; inputs[pos - 1].classList.remove('filled'); inputs[pos - 1].focus();
+      } else if (e.key === 'ArrowLeft' && pos > 0) { e.preventDefault(); inputs[pos - 1].focus(); }
+      else if (e.key === 'ArrowRight' && pos < inputs.length - 1) { e.preventDefault(); inputs[pos + 1].focus(); }
+      else if (e.key === 'Enter') { e.preventDefault(); submitAnswer(); }
     });
-
     input.addEventListener('focus', () => input.select());
   });
 }
 
-/**
- * 送出答案：
- * 1. 把單字拆成字元陣列 answer = word.split('')
- * 2. 對每個輸入框，依其 data-index 把孩子輸入的字母填回 answer[index]
- *    （未挖空的位置維持原本字母）
- * 3. 將 answer.join('') 與正確單字比對（不分大小寫）
- */
+/* 送出：把輸入的字母依 data-index 填回字元陣列，組成字串後比對 */
 function submitAnswer() {
-  if (game.locked) return;
+  if (game.locked || !game.current) return;
   const word = game.current.en;
   const inputs = Array.from(document.querySelectorAll('#letters .letter-input'));
-
-  // 還有空格沒填 → 溫柔提醒，不算錯
-  const emptyOne = inputs.find(inp => !inp.value);
-  if (emptyOne) {
-    $('feedback').style.color = 'var(--purple-dark)';
-    $('feedback').textContent = '還有空格沒填完喔 ✏️';
-    emptyOne.focus();
-    return;
-  }
-
+  const empty = inputs.find(i => !i.value);
+  if (empty) { $('feedback').className = 'feedback info'; $('feedback').textContent = '還有空格沒填完'; empty.focus(); return; }
   const answer = word.split('');
-  inputs.forEach(inp => { answer[Number(inp.dataset.index)] = inp.value; });
+  inputs.forEach(i => { answer[Number(i.dataset.index)] = i.value; });
   const typed = answer.join('');
-
-  if (typed.toLowerCase() === word.toLowerCase()) {
-    handleCorrect();
-  } else {
-    handleWrong(typed);
-  }
+  if (typed.toLowerCase() === word.toLowerCase()) handleCorrect(); else handleWrong(typed);
 }
 
-// 答對：進入下一階段；若已是階段三則過關
 function handleCorrect() {
   game.locked = true;
   $('letters').classList.add('correct');
-  const cheers = ['好棒！', '答對了！', '你好厲害！', '太讚了！', 'Great!'];
-  $('feedback').style.color = 'var(--mint-dark)';
-  $('feedback').textContent = '🎉 ' + cheers[Math.floor(Math.random() * cheers.length)];
-
+  $('feedback').className = 'feedback ok';
+  $('feedback').textContent = '正確';
   if (game.stage < game.totalStages) {
     setTimeout(() => startStage(game.stage + 1), 900);
   } else {
-    // 三個階段全部通過 → 單字過關
-    game.score += 1;
-    saveScore(game.score);
-    $('score').textContent = game.score;
+    $('stage-bar').style.width = '100%';
+    saveScore(loadScore() + 1);
+    game.done += 1;
     speak(game.current.en);
     setTimeout(showClearModal, 700);
   }
 }
-
 function showClearModal() {
-  confetti();
-  const emojis = ['🎉', '🏆', '🦄', '🌈', '👑', '🎀', '💖'];
-  $('clear-emoji').textContent = emojis[Math.floor(Math.random() * emojis.length)];
-  $('clear-title').textContent = '這個單字你學會了！';
-  $('clear-word').textContent = game.current.en;
+  $('clear-stars').hidden = true;
+  setBadge('ok');
+  $('clear-title').textContent = '本題完成';
+  $('clear-word').hidden = false; $('clear-word').textContent = game.current.en;
   $('clear-zh').textContent = game.current.zh;
-  $('clear-extra').style.display = '';
-  $('btn-next').textContent = '下一個單字 ➡️';
-  $('btn-next').onclick = () => { closeModal('modal-clear'); nextWord(); };
+  const grad = game.mode === 'mistakes' && !game.wrongThisWord;   // 錯題練習一次都沒錯 → 畢業
+  if (grad) { markMastered(game.current.en, true); updateCounts(); }
+  $('clear-grad').hidden = !grad;
+  $('clear-extra').hidden = false;
+  $('clear-list').hidden = true;
+  $('btn-alt').hidden = true;
+  setNextButton(game.queue.length ? '下一個單字' : '查看結果', nextWord);
   openModal('modal-clear');
 }
 
-// 答錯：抖動 → 彈窗顯示正確拼法 → 按「再試一次」退回階段一
+/* 答錯：記錄錯題 → 顯示正確拼法 → 按「再試一次」回到「同一關」 */
 function handleWrong(typed) {
   game.locked = true;
+  game.wrongThisWord = true;
+  if (!game.roundWrong.some(w => w.en === game.current.en)) game.roundWrong.push(game.current);
+  recordMistake(game.current, typed);
+  updateCounts();
   $('letters').classList.add('wrong');
   speak(game.current.en);
   setTimeout(() => {
     $('wrong-correct').textContent = game.current.en;
     $('wrong-yours').textContent = '你拼的是：' + typed;
+    $('wrong-next').textContent = `請記住正確拼法，再作答一次第 ${game.stage} 關。`;
     openModal('modal-wrong');
   }, 450);
 }
 
-$('btn-retry').addEventListener('click', () => {
-  closeModal('modal-wrong');
-  startStage(1);   // 同一個單字，從階段一重新開始
-});
+/* =============================================================
+   錯題本
+   ============================================================= */
+function showMistakeScreen() {
+  const list = openMistakes().sort((a, b) => b.count - a.count || b.lastTime - a.lastTime);
+  const ul = $('mistake-list'); ul.innerHTML = '';
+  if (!list.length) ul.appendChild(el('li', 'empty', '目前沒有錯題，太棒了！'));
+  list.forEach(m => {
+    const li = el('li', 'item');
+    const info = el('div', 'info');
+    const head = el('div'); head.append(el('span', 'en', m.en), el('span', 'zh', m.zh));
+    const meta = el('div', 'meta'); meta.append(el('span', null, `錯 ${m.count} 次`));
+    info.append(head, meta);
+    const actions = el('div', 'actions'); actions.append(iconBtn('speaker', '聽發音', () => speak(m.en)));
+    li.append(info, actions); ul.appendChild(li);
+  });
+  $('btn-practice-mistakes').hidden = !list.length;
+  showScreen('mistakes');
+}
 
+/* =============================================================
+   按鈕綁定
+   ============================================================= */
+function goHome() { renderHome(); showScreen('home'); }
+$('btn-play').addEventListener('click', startGame);
+$('btn-home-mistakes').addEventListener('click', showMistakeScreen);
+$('btn-game-mistakes').addEventListener('click', showMistakeScreen);
+$('btn-mistakes-back').addEventListener('click', goHome);
+$('btn-practice-mistakes').addEventListener('click', startMistakePractice);
+$('btn-game-back').addEventListener('click', goHome);
 $('btn-submit').addEventListener('click', submitAnswer);
-// 🔊 聽發音：念出目前這個單字
 $('btn-speak').addEventListener('click', () => game.current && speak(game.current.en));
-
-// 🔄 重考這個字：同一個單字從第 1 關重新開始（不扣分、不換字）
-$('btn-restart-word').addEventListener('click', () => {
-  if (!game.current) return;
-  startStage(1);
-});
-
-// 過關視窗裡的「聽發音」與「再考一次」
+$('btn-restart-word').addEventListener('click', () => game.current && startStage(1));
+$('btn-retry').addEventListener('click', () => { closeModal('modal-wrong'); startStage(game.stage); });  // 同一關再考
+$('btn-wrong-speak').addEventListener('click', () => game.current && speak(game.current.en));
 $('btn-clear-speak').addEventListener('click', () => game.current && speak(game.current.en));
 $('btn-clear-again').addEventListener('click', () => {
   closeModal('modal-clear');
+  game.done -= 1;                 // 同一個字重考，進度不往前算
+  saveScore(Math.max(0, loadScore() - 1));
+  game.wrongThisWord = false;
+  updateCounts();
   startStage(1);
 });
-$('btn-game-back').addEventListener('click', () => showScreen('home'));
 
-// 開啟網頁時先跑一次 loadWords()，確保預設單字已寫入 localStorage
-loadWords();
+// 初始化
+loadQuizzes();
+renderHome();
 </script>
 </body>
 </html>
