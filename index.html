@@ -120,11 +120,14 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .feedback{text-align:center;font-weight:700;font-size:22px;min-height:32px}
 .feedback.ok{color:var(--green600)} .feedback.info{color:var(--slate500)}
 
-.controls{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.controls{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:560px){.controls{grid-template-columns:1fr 1fr}}
+.cbtn[disabled]{opacity:.45;cursor:not-allowed}
 .cbtn{min-height:92px;border-radius:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-weight:700;font-size:clamp(17px,3.6vw,21px);box-shadow:var(--shadow3d);transition:transform .08s,box-shadow .08s;color:#fff}
 .cbtn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
 .cbtn .emo{font-size:28px}
 #btn-speak{background:var(--sky500)}
+#btn-jump-final{background:var(--violet500)}
 #btn-submit{background:var(--green500)}
 #btn-restart-word{background:var(--amber400);color:var(--amber900)}
 
@@ -221,6 +224,7 @@ label.t{font-size:16px;font-weight:700;color:var(--slate700)}
     <div class="feedback" id="feedback"></div>
     <div class="controls">
       <button class="cbtn" id="btn-speak" data-icon="speaker">聽發音</button>
+      <button class="cbtn" id="btn-jump-final" data-icon="flag">直接考最後一關</button>
       <button class="cbtn main" id="btn-submit" data-icon="check">送出答案</button>
       <button class="cbtn" id="btn-restart-word" data-icon="again">重考這個字</button>
     </div>
@@ -390,7 +394,8 @@ const ICON = {
   star:'<span class="emo">⭐</span>',
   gear:'<span class="emo">⚙️</span>',
   oops:'<span class="emo">🤗</span>',
-  party:'<span class="emo">🎉</span>'
+  party:'<span class="emo">🎉</span>',
+  flag:'<span class="emo">🏁</span>'
 };
 function applyIcons(root = document) {
   root.querySelectorAll('[data-icon]').forEach(el => {
@@ -942,6 +947,9 @@ function startStage(stage) {
   const hidden = game.mask.filter(Boolean).length;
   $('stage-hint').textContent = stage === game.totalStages ? '最後一關：整個單字自己拼出來' : `填上前面 ${hidden} 個字母`;
 
+  // 已經是最後一關時，「直接考最後一關」按鈕變灰不能按
+  $('btn-jump-final').disabled = stage === game.totalStages;
+
   const dots = $('stage-dots'); dots.innerHTML = '';
   for (let s = 1; s <= game.totalStages; s++) {
     const d = el('div', 'dot' + (s < stage ? ' done' : '') + (s === stage ? ' cur' : ''));
@@ -1093,6 +1101,11 @@ $('btn-game-back').addEventListener('click', goHome);
 $('btn-submit').addEventListener('click', submitAnswer);
 $('btn-speak').addEventListener('click', () => game.current && speak(game.current.en));
 $('btn-restart-word').addEventListener('click', () => game.current && startStage(1));
+// 🏁 直接考最後一關：這個單字跳過前面的關卡，直接整個拼出來（下一個單字仍從第 1 關開始）
+$('btn-jump-final').addEventListener('click', () => {
+  if (!game.current || game.locked) return;
+  startStage(game.totalStages);
+});
 $('btn-retry').addEventListener('click', () => { closeModal('modal-wrong'); startStage(game.stage); });  // 同一關再考
 $('btn-wrong-speak').addEventListener('click', () => game.current && speak(game.current.en));
 $('btn-clear-speak').addEventListener('click', () => game.current && speak(game.current.en));
