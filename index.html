@@ -117,15 +117,15 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .letters.wrong{animation:shake .4s ease}
 @keyframes bounceIn{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
 @keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
-.feedback{text-align:center;font-weight:700;font-size:22px;min-height:32px}
+.feedback{text-align:center;font-weight:700;font-size:20px;min-height:28px;margin:-6px 0}
 .feedback.ok{color:var(--green600)} .feedback.info{color:var(--slate500)}
 
 .controls{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 @media (max-width:560px){.controls{grid-template-columns:1fr 1fr}}
 .cbtn[disabled]{opacity:.45;cursor:not-allowed}
-.cbtn{min-height:92px;border-radius:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-weight:700;font-size:clamp(17px,3.6vw,21px);box-shadow:var(--shadow3d);transition:transform .08s,box-shadow .08s;color:#fff}
+.cbtn{min-height:68px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-weight:700;font-size:clamp(15px,3.4vw,18px);box-shadow:var(--shadow3d);transition:transform .08s,box-shadow .08s;color:#fff}
 .cbtn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
-.cbtn .emo{font-size:28px}
+.cbtn .emo{font-size:22px}
 #btn-speak{background:var(--sky500)}
 #btn-jump-final{background:var(--violet500)}
 #btn-submit{background:var(--green500)}
@@ -150,6 +150,8 @@ input[type=text],input[type=password],select{font:inherit;font-size:17px;color:v
 input[type=text]:focus,input[type=password]:focus,select:focus{border-color:var(--sky400)}
 .add-form{display:grid;grid-template-columns:1fr 1fr auto;gap:10px}
 .add-form.two{grid-template-columns:1fr auto}
+.import-box{background:var(--amber50);border:2px dashed var(--amber200);border-radius:20px;padding:14px 16px}
+.import-box .btn{flex:1 1 160px}
 @media (max-width:560px){.add-form,.add-form.two{grid-template-columns:1fr}}
 .form-msg{margin:-6px 0 0;min-height:1.3em;font-weight:700;font-size:14px}
 .form-msg.err{color:var(--red500)} .form-msg.ok{color:var(--green600)}
@@ -176,6 +178,22 @@ label.t{font-size:16px;font-weight:700;color:var(--slate700)}
 #btn-pw-ok{background:var(--sky500);color:#fff}
 #btn-pw-cancel{background:var(--slate200)}
 .stars{display:none!important}
+
+/* 畫面字母鍵盤 */
+.kb{display:flex;flex-direction:column;gap:8px;padding:14px 10px;background:var(--sky50);border:2px solid var(--sky100);border-radius:24px;user-select:none;-webkit-user-select:none}
+.kb-row{display:flex;justify-content:center;gap:6px}
+.key{flex:1 1 0;max-width:58px;min-width:0;height:58px;border-radius:14px;background:#fff;box-shadow:0 4px 0 rgba(0,0,0,.14);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;transition:transform .06s,background .15s;touch-action:manipulation}
+.key b{font-size:clamp(20px,5vw,26px);font-weight:700;color:var(--slate800)}
+.key small{font-size:11px;font-weight:700;color:var(--slate400);margin-top:3px}
+.key:active,.key.flash{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.14);background:var(--sky200)}
+.key.hint{background:var(--amber300);animation:hintPulse .5s ease-in-out 4}
+.key.hint b{color:var(--amber900)}
+@keyframes hintPulse{50%{transform:scale(1.18)}}
+.kb-row.tools .key{max-width:none;flex:1 1 0;flex-direction:row;gap:6px;font-weight:700;font-size:17px}
+.key.k-hint{background:var(--amber400);color:var(--amber900)}
+.key.k-del{background:#fff;color:var(--slate700)}
+.key[disabled]{opacity:.45;cursor:not-allowed}
+@media (max-width:420px){.kb{padding:10px 6px;gap:6px}.kb-row{gap:4px}.key{height:50px;border-radius:10px}}
 .confetti{position:fixed;top:-20px;z-index:100;pointer-events:none;width:10px;height:16px;border-radius:3px;animation:fall linear forwards}
 @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -222,6 +240,8 @@ label.t{font-size:16px;font-weight:700;color:var(--slate700)}
     <div class="stage-hint" id="stage-hint"></div>
     <div class="letters" id="letters"></div>
     <div class="feedback" id="feedback"></div>
+    <!-- 畫面字母鍵盤：可用滑鼠／手指點，也會跟著實體鍵盤亮起 -->
+    <div class="kb" id="kb" aria-label="字母鍵盤"></div>
     <div class="controls">
       <button class="cbtn" id="btn-speak" data-icon="speaker">聽發音</button>
       <button class="cbtn" id="btn-jump-final" data-icon="flag">直接考最後一關</button>
@@ -256,6 +276,7 @@ label.t{font-size:16px;font-weight:700;color:var(--slate700)}
   <div class="seg" id="parent-tabs">
     <button data-tab="quizzes" aria-pressed="true">考卷</button>
     <button data-tab="report" aria-pressed="false">錯了哪些單字</button>
+    <button data-tab="settings" aria-pressed="false">設定</button>
   </div>
 
   <!-- 考卷管理 -->
@@ -294,6 +315,17 @@ label.t{font-size:16px;font-weight:700;color:var(--slate700)}
         </form>
       </div>
       <p class="form-msg" id="form-msg"></p>
+      <!-- 用文字檔一次匯入很多單字 -->
+      <div class="field import-box">
+        <label class="t">📄 用文字檔一次匯入很多單字</label>
+        <p class="muted" style="margin:0;font-size:14px">先按「匯出範例」下載範例檔，用記事本照格式改成要考的單字並存檔，再按「匯入文字檔」選那個檔案。單字會加進目前編輯的這張考卷。</p>
+        <div class="row">
+          <button type="button" class="btn" id="btn-export-sample" data-icon="download">匯出範例</button>
+          <button type="button" class="btn primary" id="btn-import" data-icon="upload">匯入文字檔</button>
+          <input type="file" id="import-file" accept=".txt,.csv,text/plain" hidden>
+        </div>
+        <p class="form-msg" id="import-msg" style="margin:0;white-space:pre-line"></p>
+      </div>
       <ul class="list" id="word-list"></ul>
     </section>
   </div>
@@ -320,6 +352,31 @@ label.t{font-size:16px;font-weight:700;color:var(--slate700)}
     </div>
     <ul class="list" id="report-list"></ul>
     <div class="row"><span class="spacer"></span><button class="btn small danger" id="btn-clear-report" data-icon="trash">清除全部紀錄</button></div>
+  </section>
+
+  <!-- 設定：畫面鍵盤排列方式 -->
+  <section class="card" id="tab-settings" hidden>
+    <div class="card-head">
+      <h2>⌨️ 畫面鍵盤</h2>
+      <p>考試畫面下方的字母鍵盤要怎麼排列？</p>
+    </div>
+    <div class="seg" id="kb-layout-seg">
+      <button data-layout="abc" aria-pressed="false">🔤 ABC 順序（比較好找）</button>
+      <button data-layout="qwerty" aria-pressed="false">💻 電腦鍵盤排列（QWERTY）</button>
+    </div>
+    <div class="kb" id="kb-preview" aria-hidden="true" style="pointer-events:none"></div>
+  </section>
+
+  <!-- 設定：最後一關能不能用提示 -->
+  <section class="card" id="tab-settings-hint" hidden>
+    <div class="card-head">
+      <h2>💡 最後一關的提示</h2>
+      <p>最後一關要整個單字自己拼出來。要不要讓孩子在最後一關也能按「提示」？</p>
+    </div>
+    <div class="seg" id="hint-final-seg">
+      <button data-v="off" aria-pressed="true">🚫 最後一關不能用提示</button>
+      <button data-v="on" aria-pressed="false">✅ 最後一關也可以用提示</button>
+    </div>
   </section>
 </section>
 
@@ -395,7 +452,10 @@ const ICON = {
   gear:'<span class="emo">⚙️</span>',
   oops:'<span class="emo">🤗</span>',
   party:'<span class="emo">🎉</span>',
-  flag:'<span class="emo">🏁</span>'
+  flag:'<span class="emo">🏁</span>',
+  hint:'<span class="emo">💡</span>',
+  download:'<span class="emo">📤</span>',
+  upload:'<span class="emo">📥</span>'
 };
 function applyIcons(root = document) {
   root.querySelectorAll('[data-icon]').forEach(el => {
@@ -610,8 +670,11 @@ function setTab(tab) {
   $('parent-tabs').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tab === tab)));
   $('tab-quizzes').hidden = tab !== 'quizzes';
   $('tab-report').hidden = tab !== 'report';
+  $('tab-settings').hidden = tab !== 'settings';
+  $('tab-settings-hint').hidden = tab !== 'settings';
   if (tab === 'quizzes') renderQuizzes();
   if (tab === 'report') renderReport();
+  if (tab === 'settings') renderSettings();
 }
 $('parent-tabs').querySelectorAll('button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 $('btn-parent-back').addEventListener('click', goHome);
@@ -702,6 +765,96 @@ $('btn-rename-quiz').addEventListener('click', () => {
   updateEditingQuiz(q => { q.name = name; });
   renderQuizzes();
 });
+/* =============================================================
+   匯入／匯出文字檔
+   格式：每行一個單字「英文 中文」，英文和中文之間用空白、逗號、Tab 或冒號隔開
+         以 # 開頭的行是說明，會略過；空白行也會略過
+   ============================================================= */
+const SAMPLE_TEXT = [
+  '# 練習背英文單字－單字匯入範例',
+  '# 每一行寫一個單字：先寫英文，再寫中文，中間用空白或逗號隔開',
+  '# 英文可以有空白或 -，例如 ice cream、T-shirt',
+  '# 以 # 開頭的行是說明文字，匯入時會自動略過，可以留著也可以刪掉',
+  '# 改好後存檔，到「家長設定 → 考卷 → 編輯」按「匯入文字檔」選這個檔案',
+  '',
+  'apple 蘋果',
+  'banana 香蕉',
+  'ice cream 冰淇淋',
+  'T-shirt, T恤',
+  'teacher 老師',
+  'birthday 生日',
+  ''
+].join('\r\n');
+
+$('btn-export-sample').addEventListener('click', () => {
+  // 開頭加 BOM，Windows 記事本打開時中文才不會變亂碼
+  // 用 data: 網址下載，直接點開 html 檔（file://）時檔名也能正確
+  const a = document.createElement('a');
+  a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent('\uFEFF' + SAMPLE_TEXT);
+  a.download = 'words-sample.txt';   // 用英文檔名，各種瀏覽器都能正確存檔
+  document.body.appendChild(a); a.click(); a.remove();
+});
+
+$('btn-import').addEventListener('click', () => {
+  if (!editingQuiz()) return;
+  $('import-file').value = '';
+  $('import-file').click();
+});
+
+// 讀檔：先用 UTF-8 解碼，若出現亂碼字元再改用 Big5（舊版記事本存的繁體中文）
+async function readTextFile(file) {
+  const buf = await file.arrayBuffer();
+  let text = new TextDecoder('utf-8').decode(buf);
+  if (text.includes('�')) {
+    try { text = new TextDecoder('big5').decode(buf); } catch (e) {}
+  }
+  return text.replace(/^\uFEFF/, '');
+}
+
+// 解析一行：英文在前（字母、空白、-、'），其餘去掉分隔符號就是中文
+function parseLine(line) {
+  line = line.trim().replace(/^\d+[\.\)、]\s*/, '');      // 去掉開頭編號「1. 」
+  if (!line || line.startsWith('#')) return null;
+  const m = line.match(/^[A-Za-z][A-Za-z '’\-]*/);
+  if (!m) return { error: line };
+  const en = m[0].replace(/’/g, "'").trim().replace(/[\s\-]+$/, '').toLowerCase().replace(/\s+/g, ' ');
+  const zh = line.slice(m[0].length).replace(/^[\s,，、:：\t=|\/\-]+/, '').trim();
+  if (!en || !zh) return { error: line };
+  return { en, zh };
+}
+
+$('import-file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  const q = editingQuiz();
+  const msg = $('import-msg');
+  if (!file || !q) return;
+  let text;
+  try { text = await readTextFile(file); }
+  catch (err) { msg.className = 'form-msg err'; msg.textContent = '讀不到這個檔案，請確認是文字檔（.txt）。'; return; }
+
+  const added = [], dup = [], bad = [];
+  const have = new Set(q.words.map(w => w.en));
+  text.split(/\r?\n/).forEach(raw => {
+    const r = parseLine(raw);
+    if (!r) return;
+    if (r.error) { bad.push(r.error); return; }
+    if (have.has(r.en)) { dup.push(r.en); return; }
+    have.add(r.en);
+    added.push({ en: r.en, zh: r.zh });
+  });
+
+  if (added.length) {
+    updateEditingQuiz(x => x.words.push(...added));
+    renderQuizzes();
+  }
+  const lines = [];
+  lines.push(added.length ? `✅ 已匯入 ${added.length} 個單字到「${q.name}」` : '沒有匯入任何新單字');
+  if (dup.length) lines.push(`↪️ 已經在考卷裡、略過 ${dup.length} 個：${dup.slice(0, 8).join('、')}${dup.length > 8 ? '…' : ''}`);
+  if (bad.length) lines.push(`⚠️ 看不懂、略過 ${bad.length} 行（要「英文 中文」都有）：${bad.slice(0, 3).join('／')}${bad.length > 3 ? '…' : ''}`);
+  msg.className = 'form-msg ' + (added.length ? 'ok' : 'err');
+  msg.textContent = lines.join('\n');
+});
+
 $('add-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const q = editingQuiz(); if (!q) return;
@@ -837,7 +990,8 @@ const game = {
   stage: 1, totalStages: 1, mask: [],
   locked: false,
   mode: 'normal',        // 'normal' 考考卷 / 'mistakes' 練習錯題
-  wrongThisWord: false
+  wrongThisWord: false,
+  activeInput: null      // 目前選中的字母格（畫面鍵盤輸入到這格）
 };
 
 function startGame() {
@@ -858,6 +1012,7 @@ function startRound(mode, name, words) {
   game.done = 0;
   game.roundWrong = [];
   $('game-quiz').textContent = name;
+  buildKeyboard($('kb'), true);
   updateCounts();
   showScreen('game');
   nextWord();
@@ -947,8 +1102,10 @@ function startStage(stage) {
   const hidden = game.mask.filter(Boolean).length;
   $('stage-hint').textContent = stage === game.totalStages ? '最後一關：整個單字自己拼出來' : `填上前面 ${hidden} 個字母`;
 
-  // 已經是最後一關時，「直接考最後一關」按鈕變灰不能按
+  // 已經是最後一關時，「直接考最後一關」按鈕變灰不能按；提示也不能用
   $('btn-jump-final').disabled = stage === game.totalStages;
+  game.activeInput = null;
+  updateHintButton();
 
   const dots = $('stage-dots'); dots.innerHTML = '';
   for (let s = 1; s <= game.totalStages; s++) {
@@ -972,6 +1129,7 @@ function renderLetters() {
       input.dataset.index = i;               // 對應單字中的位置
       input.autocomplete = 'off'; input.autocapitalize = 'off'; input.spellcheck = false;
       input.setAttribute('autocorrect', 'off');
+      input.setAttribute('inputmode', 'none');   // 平板／手機不跳出系統鍵盤，改用畫面鍵盤
       input.setAttribute('aria-label', `第 ${i + 1} 個字母`);
       box.appendChild(input);
     } else if (!/[a-z]/i.test(ch)) {
@@ -1002,9 +1160,137 @@ function bindInputNavigation() {
       else if (e.key === 'ArrowRight' && pos < inputs.length - 1) { e.preventDefault(); inputs[pos + 1].focus(); }
       else if (e.key === 'Enter') { e.preventDefault(); submitAnswer(); }
     });
-    input.addEventListener('focus', () => input.select());
+    input.addEventListener('focus', () => { game.activeInput = input; input.select(); });
   });
 }
+
+/* =============================================================
+   畫面字母鍵盤
+   - 兩種排列：ABC 順序 / 電腦鍵盤（QWERTY），在家長設定切換
+   - 每個鍵印小寫（大字）＋大寫（小字），對應實體鍵盤上印的大寫字母
+   - 按實體鍵盤時，畫面上同一個鍵會亮一下
+   - 💡 提示：閃爍「目前這一格」正確字母所在的鍵；最後一關不能用
+   ============================================================= */
+const STORAGE_KB = 'spellingGame.kbLayout';
+const KB_LAYOUTS = {
+  abc:    ['abcdefg', 'hijklmn', 'opqrstu', 'vwxyz'],
+  qwerty: ['qwertyuiop', 'asdfghjkl', 'zxcvbnm']
+};
+const STORAGE_HINT_FINAL = 'spellingGame.hintFinal';   // true = 最後一關也可以用提示（預設 false）
+function hintAllowedOnFinal() { return store.get(STORAGE_HINT_FINAL, false) === true; }
+// 這一關能不能用提示：不是最後一關，或家長允許最後一關也能用
+function hintAllowedNow() { return game.stage !== game.totalStages || hintAllowedOnFinal(); }
+function kbLayout() { const v = store.get(STORAGE_KB, 'abc'); return KB_LAYOUTS[v] ? v : 'abc'; }
+
+function buildKeyboard(box, withTools) {
+  box.innerHTML = '';
+  KB_LAYOUTS[kbLayout()].forEach(rowText => {
+    const row = el('div', 'kb-row');
+    rowText.split('').forEach(ch => {
+      const k = el('button', 'key');
+      k.type = 'button'; k.dataset.key = ch;
+      k.setAttribute('aria-label', ch);
+      k.append(el('b', null, ch), el('small', null, ch.toUpperCase()));
+      row.appendChild(k);
+    });
+    box.appendChild(row);
+  });
+  if (!withTools) return;
+  const tools = el('div', 'kb-row tools');
+  const hint = el('button', 'key k-hint'); hint.type = 'button'; hint.id = 'btn-hint';
+  hint.innerHTML = ICON.hint; hint.append('提示');
+  const del = el('button', 'key k-del'); del.type = 'button'; del.dataset.key = 'Backspace';
+  del.innerHTML = '<span class="emo">⌫</span>'; del.append('刪除');
+  tools.append(hint, del);
+  box.appendChild(tools);
+}
+
+// 目前要輸入的格子：正在選的那格；沒有的話就是第一個空格
+function targetInput() {
+  const inputs = Array.from(document.querySelectorAll('#letters .letter-input'));
+  if (game.activeInput && inputs.includes(game.activeInput)) return game.activeInput;
+  return inputs.find(i => !i.value) || inputs[inputs.length - 1] || null;
+}
+function flashKey(key) {
+  const k = document.querySelector(`#kb .key[data-key="${key}"]`);
+  if (!k) return;
+  k.classList.add('flash');
+  setTimeout(() => k.classList.remove('flash'), 150);
+}
+function pressKey(key) {
+  if (game.locked || !game.current) return;
+  const inputs = Array.from(document.querySelectorAll('#letters .letter-input'));
+  const cur = targetInput();
+  if (!cur) return;
+  if (key === 'Backspace') {
+    if (cur.value) { cur.value = ''; cur.classList.remove('filled'); cur.focus(); }
+    else {
+      const prev = inputs[inputs.indexOf(cur) - 1];
+      if (prev) { prev.value = ''; prev.classList.remove('filled'); prev.focus(); }
+    }
+    return;
+  }
+  cur.value = key;
+  cur.dispatchEvent(new Event('input'));   // 交給原本的邏輯：轉小寫、自動跳下一格
+  if (cur === inputs[inputs.length - 1]) cur.focus();
+}
+function showHint() {
+  if (game.locked || !game.current || !hintAllowedNow()) return;
+  const cur = targetInput();
+  if (!cur) return;
+  const letter = game.current.en[Number(cur.dataset.index)].toLowerCase();
+  cur.focus();
+  document.querySelectorAll('#kb .key.hint').forEach(k => k.classList.remove('hint'));
+  const k = document.querySelector(`#kb .key[data-key="${letter}"]`);
+  if (!k) return;
+  k.classList.add('hint');
+  setTimeout(() => k.classList.remove('hint'), 2200);
+}
+function updateHintButton() {
+  const b = $('btn-hint'); if (!b) return;
+  const blocked = !hintAllowedNow();   // 最後一關且家長沒有開放
+  b.disabled = blocked;
+  b.title = blocked ? '最後一關不能用提示' : '找不到字母時按這裡';
+  b.lastChild.textContent = blocked ? '最後一關沒有提示' : '提示';
+}
+
+// 用 pointerdown + preventDefault，點鍵盤時輸入框不會失去焦點
+$('kb').addEventListener('pointerdown', e => {
+  const k = e.target.closest('.key'); if (!k) return;
+  e.preventDefault();
+  if (k.disabled) return;
+  if (k.id === 'btn-hint') showHint();
+  else pressKey(k.dataset.key);
+});
+// 鍵盤操作（Tab 到按鈕後按 Enter／空白鍵）也可以用
+$('kb').addEventListener('click', e => {
+  if (e.detail !== 0) return;   // 滑鼠／觸控已在 pointerdown 處理
+  const k = e.target.closest('.key'); if (!k || k.disabled) return;
+  if (k.id === 'btn-hint') showHint(); else pressKey(k.dataset.key);
+});
+// 按實體鍵盤時，畫面上同一個鍵亮一下
+document.addEventListener('keydown', e => {
+  if (!$('screen-game').classList.contains('active')) return;
+  if (/^[a-z]$/i.test(e.key)) flashKey(e.key.toLowerCase());
+  else if (e.key === 'Backspace') flashKey('Backspace');
+});
+
+/* 家長設定：鍵盤排列 */
+function renderSettings() {
+  const cur = kbLayout();
+  $('kb-layout-seg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.layout === cur)));
+  buildKeyboard($('kb-preview'), false);
+  const hv = hintAllowedOnFinal() ? 'on' : 'off';
+  $('hint-final-seg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === hv)));
+}
+$('hint-final-seg').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  store.set(STORAGE_HINT_FINAL, b.dataset.v === 'on');
+  renderSettings();
+}));
+$('kb-layout-seg').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  store.set(STORAGE_KB, b.dataset.layout);
+  renderSettings();
+}));
 
 /* 送出：把輸入的字母依 data-index 填回字元陣列，組成字串後比對 */
 function submitAnswer() {
