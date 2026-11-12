@@ -178,6 +178,9 @@ label.t{font-size:16px;font-weight:700;color:var(--slate700)}
 .stars{display:none!important}
 .confetti{position:fixed;top:-20px;z-index:100;pointer-events:none;width:10px;height:16px;border-radius:3px;animation:fall linear forwards}
 @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+/* 考試畫面加寬：中間的白色框約 1300 像素寬（螢幕比較窄時就佔滿畫面寬度） */
+#screen-game{max-width:1340px}
+
 /* 字母選擇區：會用到的字母＋4 個干擾字母，打亂後讓孩子點選 */
 .pool{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;padding:14px 12px;background:var(--sky50);border:2px solid var(--sky100);border-radius:24px}
 .pool-tile{width:clamp(46px,10vw,58px);height:clamp(50px,11vw,62px);border-radius:16px;background:#fff;color:var(--sky700);font-weight:700;font-size:clamp(26px,5.5vw,32px);box-shadow:0 5px 0 rgba(0,0,0,.15);transition:transform .08s,box-shadow .08s,opacity .15s;touch-action:manipulation}
