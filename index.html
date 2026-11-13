@@ -1006,7 +1006,7 @@ function renderLetters() {
    字母選擇區
    - 題目卡片 = 這一關被挖空的字母（重複的字母也會有重複的卡片）＋ 4 個干擾字母
    - 干擾字母從「這個單字沒有用到的字母」中隨機挑，避免混淆
-   - 全部打亂順序；點一下就填進目前選中的格子（沒有選中就填第一個空格）
+   - 依照字母順序 a→z 排列；點一下就填進目前選中的格子（沒有選中就填第一個空格）
    - 卡片是否「用掉」是依照格子裡現在填的字母重新計算的，
      所以不論用點的、用實體鍵盤打、或刪除，卡片狀態都會正確
    ============================================================= */
@@ -1017,7 +1017,8 @@ function buildPool() {
   game.mask.forEach((hide, i) => { if (hide) needed.push(word[i]); });
   const inWord = new Set(word.replace(/[^a-z]/g, '').split(''));
   const others = shuffle('abcdefghijklmnopqrstuvwxyz'.split('').filter(c => !inWord.has(c)));
-  const letters = shuffle(needed.concat(others.slice(0, DISTRACTORS)));
+  // 字母卡依照 a→z 的字母順序排列（干擾字母混在其中，看不出哪些是答案）
+  const letters = needed.concat(others.slice(0, DISTRACTORS)).sort();
 
   const pool = $('pool'); pool.innerHTML = '';
   pool.appendChild(el('div', 'pool-label', '👆 點字母填進空格'));
